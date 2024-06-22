@@ -32,7 +32,7 @@ const AddCategory = () => {
 
     try {
     
-      const response = await fetch('https://foodcareerengine.onrender.com/api/auth/api/category', {
+      const response = await fetch('http://localhost:5000/api/auth/api/category', {
         method: 'POST',
         headers: {
 

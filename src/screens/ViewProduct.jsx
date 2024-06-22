@@ -35,7 +35,7 @@ const ViewProduct = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`https://foodcareerengine.onrender.com/api/auth/getproducts/${productId}`);
+                const response = await fetch(`http://localhost:5000/api/auth/getproducts/${productId}`);
                 const data = await response.json();
                 if (response.status === 200) {
                     setProduct(data.data);

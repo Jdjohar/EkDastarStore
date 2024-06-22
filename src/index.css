@@ -14,13 +14,13 @@ code {
     monospace;
 }
 
+.textColorBlack {
+  color:#222222 ;
+}
 
-.nav-link{
-  color: white !important;
-}
-#carousel{
-  max-height: 500px;
-}
+
+
+
 .carousalImg{
   object-fit: contain !important;
 }

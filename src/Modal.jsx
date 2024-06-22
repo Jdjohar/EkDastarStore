@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDom from 'react-dom'
+import React from 'react';
+import ReactDom from 'react-dom';
 
 const MODAL_STYLES = {
   position: 'fixed',
@@ -10,7 +10,7 @@ const MODAL_STYLES = {
   zIndex: 1000,
   height: '90%',
   width: '90%'
-}
+};
 
 const OVERLAY_STYLES = {
   position: 'fixed',
@@ -20,9 +20,12 @@ const OVERLAY_STYLES = {
   bottom: 0,
   backgroundColor: 'rgba(0, 0, 0, .7)',
   zIndex: 1000
-}
+};
 
 export default function Modal({ children, onClose }) {
+  const portalRoot = document.getElementById('cart-root');
+  
+  if (!portalRoot) return null; // Handle case where cart-root is not found
 
   return ReactDom.createPortal(
     <>
@@ -32,6 +35,6 @@ export default function Modal({ children, onClose }) {
         {children}
       </div>
     </>,
-    document.getElementById('cart-root')
-  )
+    portalRoot
+  );
 }
