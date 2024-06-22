@@ -20,6 +20,9 @@ import AddProduct  from './admin/AddProducts.jsx';
 import AddCategory  from './admin/AddCategory.jsx';
 import ForgotPassword from './screens/ForgotPassword.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
+import CheckoutForm from './screens/CheckoutForm.jsx';
+import CheckoutPage from './screens/CheckoutPage.jsx';
+import ThankYou from './screens/ThankYou.jsx';
 import Stripe from './screens/Stripe.jsx';
 
 function App() {
@@ -34,6 +37,9 @@ function App() {
             <Route exact path="/myorder" element={<MyOrder />} />
             <Route exact path="/forgotpassword" element={<ForgotPassword />} />
             <Route exact path="/stripe" element={<Stripe />} />
+            <Route exact path="/checkoutpage" element={<CheckoutPage />} />
+            <Route exact path="/thankyou" element={<ThankYou />} />
+            
             <Route exact path="/reset-password/:resetToken" element={<ResetPassword />} />
           
             <Route exact path="/viewproduct/:productId" element={<ViewProduct />} />

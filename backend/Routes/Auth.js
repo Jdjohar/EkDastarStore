@@ -13,6 +13,7 @@ const jwtSecret = "HaHa"
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const stripe = require('stripe')('sk_test_2rB0Mi5MPMyUYAnUv8on1Oef00ZIaFF3Tr');
 
 // Create a Multer storage configuration for handling file uploads
 const storage = multer.diskStorage({
@@ -439,6 +440,82 @@ router.post('/api/category', upload.single('catimg'), async (req, res) => {
       return res.status(500).json({ message: 'Internal server error.' });
     }
   });
+
+// Route to handle payments
+router.post('/payment', async (req, res) => {
+  const { amount } = req.body;
+
+  try {
+      const paymentIntent = await stripe.paymentIntents.create({
+          amount,
+          currency: 'inr',
+          automatic_payment_methods: {
+              enabled: true,
+              allow_redirects: 'never',
+          },
+      });
+
+      res.status(200).json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+      console.error('Error creating payment intent:', error.message);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
+  // POST /api/create-checkout-session
+router.post('/create-checkout-session', async (req, res) => {
+  try {
+    const { lineItems, successUrl, cancelUrl } = req.body; // lineItems should include product details, quantity, etc.
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// POST /api/stripe-webhook
+router.post('/stripe-webhook', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, 'we_1PUPrMHs6CTam63TkAXGB2db'); // Replace with your webhook secret
+  } catch (err) {
+    console.error('Webhook Error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object;
+      // Retrieve order details from session object and update your database accordingly
+      // For example, update order status or send confirmation emails
+      break;
+    case 'payment_intent.payment_failed':
+      const paymentIntent = event.data.object;
+      // Handle failed payment intent
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Return a response to acknowledge receipt of the event
+  res.json({ received: true });
+});
 
 
 module.exports = router

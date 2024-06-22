@@ -24,7 +24,7 @@ export default function Navbar(props) {
     }
 
     const items = useCart();
-   
+
 
     return (
         <div>
@@ -61,11 +61,14 @@ export default function Navbar(props) {
                             <div>
 
                                 <div className="btn bg-white text-success mx-2 " onClick={loadCart}>
-                                    {/* <Badge color="secondary" badgeContent={items.length} >
-                                        <ShoppingCartIcon />
-                                        
-                                    </Badge> */}
-                                    Cart
+                                    <button type="button" class="btn text-success position-relative">
+                                        Cart
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {items.length}
+                                            
+                                        </span>
+                                    </button>
+                                   
                                 </div>
 
                                 {cartView ? <Modal onClose={() => setCartView(false)}><Cart></Cart></Modal> : ""}

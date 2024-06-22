@@ -1,6 +1,7 @@
 import React from 'react'
 // import Delete from '@material-ui/icons/Delete'
 import { useCart, useDispatchCart } from '../components/ContextReducer';
+import { Link } from 'react-router-dom';
 export default function Cart() {
   let data = useCart();
   let dispatch = useDispatchCart();
@@ -42,7 +43,7 @@ export default function Cart() {
   return (
     <div>
 
-      {console.log(data)}
+      {console.log("Data Working!",data)}
       <div className='container m-auto mt-5 table-responsive  table-responsive-sm table-responsive-md' >
         <table className='table '>
           <thead className=' text-success fs-4'>
@@ -63,13 +64,14 @@ export default function Cart() {
                 <td>{food.qty}</td>
                 <td>{food.size}</td>
                 <td>{food.price}</td>
-                <td ><button type="button" className="btn p-0"><p className='text-danger' onClick={() => { dispatch({ type: "REMOVE", index: index }) }} /></button> </td></tr>
+                <td ><button type="button" className="btn p-0"><p className='text-danger' onClick={() => { dispatch({ type: "REMOVE", index: index }) }}> X </p></button> </td></tr>
             ))}
           </tbody>
         </table>
         <div><h1 className='fs-2 text-white'>Total Price: {totalPrice}/-</h1></div>
         <div>
-          <button className='btn bg-success mt-5 ' onClick={handleCheckOut} > Check Out </button>
+          <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button>
+          <Link className='btn bg-success mt-5 ' to={'/checkoutpage'} > Go to CheckOut Page </Link>
         </div>
       </div>
 
