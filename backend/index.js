@@ -12,7 +12,7 @@ const port = 5000
 var path = require('path');
 app.use((req, res, next) => {
   const corsWhitelist = [
-    "http://localhost:5173",
+    "https://online-services-ten.vercel.app",
     "https://gnj.vercel.app",
 ];
 if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
