@@ -10,11 +10,7 @@ export default function Card(props) {
   const [qty, setQty] = useState(1)
   const [size, setSize] = useState("")
   const priceRef = useRef();
-  // const [btnEnable, setBtnEnable] = useState(false);
-  // let totval = 0
-  // let price = Object.values(options).map((value) => {
-  //   return parseInt(value, 10);
-  // });
+
   let options = props.options;
   let priceOptions = Object.keys(options);
   let foodItem = props.item;
@@ -31,59 +27,61 @@ export default function Card(props) {
     setSize(e.target.value);
   }
   const handleAddToCart = async () => {
-    let food = []
-    for (const item of data) {
-      if (item.id === foodItem._id) {
-        food = item;
-        break;
-      }
-    }
-    console.log(food, "Food")
-    console.log(new Date())
-    if (food != []) {
-      if (food.size === size) {
-        console.log("1");
-        await dispatch({ type: "UPDATE", id: foodItem._id, price: finalPrice, qty: qty })
-        return
-      }
-      else if (food.size !== size) {
-        console.log("2");
-        await dispatch({ type: "ADD", id: foodItem._id, name: foodItem.name, price: finalPrice, qty: qty, size: size,img: props.ImgSrc })
-        console.log("Size different so simply ADD one more to the list")
-        return
-      }
-      return
-    }
+    let food = data.find(item => item.id === foodItem._id && item.size === size);
 
-    await dispatch({ type: "ADD", id: foodItem._id, name: foodItem.name, price: finalPrice, qty: qty, size: size })
-console.log("3");
-    // setBtnEnable(true)
+    if (food) {
+        // If the product with the same size exists in the cart, update its quantity
+        let updatedPrice = qty * parseInt(options[size]);  // Calculate the new price
 
-  }
+        await dispatch({
+            type: "UPDATE",
+            id: foodItem._id,
+            price: updatedPrice,  // Pass the recalculated price
+            qty: qty,  // Pass the new quantity
+            size: size  // Make sure size is included
+        });
+    } else {
+        // If the product doesn't exist in the cart, add it as a new item
+        let finalPrice = qty * parseInt(options[size]);
+
+        await dispatch({
+            type: "ADD",
+            id: foodItem._id,
+            name: foodItem.name,
+            price: finalPrice,
+            qty: qty,
+            size: size,
+            img: props.ImgSrc
+        });
+    }
+};
 
   useEffect(() => {
-    setSize(priceRef.current.value)
-  }, [])
+    if (priceOptions.length > 0) {
+      setSize(priceOptions[0]);  // Set default size
+    }
+  }, [priceOptions]);
 
   // useEffect(()=>{
   // checkBtn();
   //   },[data])
 
-  let finalPrice = qty * parseInt(options[size]);   //This is where Price is changing
+  let finalPrice = qty * (options[size] ? parseInt(options[size]) : 0);
+  // let finalPrice = qty * parseInt(options[size]);   //This is where Price is changing
   // totval += finalPrice;
   // console.log(totval)
   return (
     <div>
-      <div className="card mt-3" key={props.item._id} style={{maxHeight: "360px" }}>
+      <div className="card mt-3" key={props.item._id} style={{ maxHeight: "360px" }}>
         <img src={props.ImgSrc} className="card-img-top" alt="..." style={{ height: "120px", objectFit: "fill" }} />
         <div className="card-body">
           <Link key={foodItem._id} to={`/viewproduct/${foodItem._id}`}>
 
-          <h5 className="card-title">{props.foodName}</h5>
-        
+            <h5 className="card-title">{props.foodName}</h5>
+
           </Link>
           {/* <p className="card-text">This is some random text. This is description.</p> */}
-          <div className='container w-100 p-0' style={{  }}>
+          <div className='container w-100 p-0' style={{}}>
             <select className="m-2 h-100 w-20 bg-success text-black rounded" style={{ select: "#FF0000" }} onClick={handleClick} onChange={handleQty}>
               {Array.from(Array(6), (e, i) => {
                 return (

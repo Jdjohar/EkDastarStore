@@ -54,33 +54,68 @@ const AddProduct = () => {
     setoptions(newOptions);
   };
 
+  // const handleSubmit = async (e) => {
+  //   const formData = new FormData();
+  //   formData.append('name', staticFormData.name);
+  //   formData.append('description', staticFormData.description);
+  //   formData.append('CategoryName', staticFormData.CategoryName);
+  //   formData.append('img', staticFormData.img);
+
+  //   const opt = JSON.stringify([
+  //     options.reduce((acc, { key, value }) => {
+  //       if (key && value) {
+  //         acc[key] = value;
+  //       }
+  //       return acc;
+  //     }, {}),
+  //   ]);
+  //   formData.append('options', opt);
+
+  //   try {
+  //     const response = await fetch('https://store-ywot.onrender.com/api/auth/addproducts', {
+  //       method: 'POST',
+  //       headers: {},
+  //       body: formData,
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log('API Response:', data);
+  //     } else {
+  //       console.error('API Error:', response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error:', error.message);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
+    e.preventDefault();
+  
     const formData = new FormData();
     formData.append('name', staticFormData.name);
     formData.append('description', staticFormData.description);
     formData.append('CategoryName', staticFormData.CategoryName);
-    formData.append('img', staticFormData.img);
-
-    const opt = JSON.stringify([
+    formData.append('img', staticFormData.img);  // Image file
+    const opt = JSON.stringify(
       options.reduce((acc, { key, value }) => {
         if (key && value) {
           acc[key] = value;
         }
         return acc;
-      }, {}),
-    ]);
+      }, {})
+    );
     formData.append('options', opt);
-
+  
     try {
-      const response = await fetch('https://store-ywot.onrender.com/api/auth/api/products', {
+      const response = await fetch('https://store-ywot.onrender.com/api/auth/addproducts', {
         method: 'POST',
-        headers: {},
         body: formData,
       });
-
+  
       if (response.ok) {
         const data = await response.json();
-        console.log('API Response:', data);
+        console.log('Product added:', data);
       } else {
         console.error('API Error:', response.statusText);
       }
@@ -88,7 +123,6 @@ const AddProduct = () => {
       console.error('Error:', error.message);
     }
   };
-
   return (
     <>
       <AdminNavbar />

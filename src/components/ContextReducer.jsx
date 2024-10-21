@@ -9,29 +9,37 @@ const loadCartFromStorage = () => {
   };
   
 
-const reducer = (state, action) => {
+  const reducer = (state, action) => {
     switch (action.type) {
         case "ADD":
-            return [...state, { id: action.id, name: action.name, qty: action.qty, size: action.size, price: action.price, img: action.img }]
+            return [...state, { id: action.id, name: action.name, qty: action.qty, size: action.size, price: action.price, img: action.img }];
+
         case "REMOVE":
-            let newArr = [...state]
-            newArr.splice(action.index, 1)
+            let newArr = [...state];
+            newArr.splice(action.index, 1);
             return newArr;
+
         case "DROP":
-            let empArray = []
-            return empArray
+            return [];
+
         case "UPDATE":
-            let arr = [...state]
-            arr.find((food, index) => {
-                if (food.id === action.id) {
-                    console.log(food.qty, parseInt(action.qty), action.price + food.price)
-                    arr[index] = { ...food, qty: parseInt(action.qty) + food.qty, price: action.price + food.price }
+            let arr = [...state];
+            arr = arr.map((food) => {
+                if (food.id === action.id && food.size === action.size) {
+                    // Update the quantity and recalculate the price
+                    return {
+                        ...food,
+                        qty: parseInt(action.qty),  
+                        price: parseInt(action.qty) * (food.price / food.qty)  // Recalculate the price
+                    };
                 }
-                return arr
-            })
-            return arr
+                return food;
+            });
+            return arr;
+
         default:
             console.log("Error in Reducer");
+            return state;
     }
 };
 

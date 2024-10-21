@@ -14,16 +14,22 @@ export default function Login() {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email: credentials.email, password: credentials.password })
+      body: JSON.stringify({ 
+        email: credentials.email, 
+        password: credentials.password 
+      
+      })
 
     });
     const json = await response.json()
     console.log(json);
     if (json.success) {
+      console.log(json, "dsd");
+      
       //save the auth toke to local storage and redirect
       localStorage.setItem('userEmail', credentials.email)
       localStorage.setItem('token', json.authToken)
-      console.log(json);
+      localStorage.setItem('userId', json.userId)
      // Redirect based on the role
       if (json.role === 'user') {
         // Redirect to the home page for regular users

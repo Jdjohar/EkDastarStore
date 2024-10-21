@@ -22,6 +22,8 @@ import ForgotPassword from './screens/ForgotPassword.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
 import CheckoutForm from './screens/CheckoutForm.jsx';
 import CheckoutPage from './screens/CheckoutPage.jsx';
+import Testpayment from './screens/Testpayment.jsx';
+import CartPage from './screens/CartPage.jsx';
 import ThankYou from './screens/ThankYou.jsx';
 import Stripe from './screens/Stripe.jsx';
 
@@ -38,6 +40,8 @@ function App() {
             <Route exact path="/forgotpassword" element={<ForgotPassword />} />
             <Route exact path="/stripe" element={<Stripe />} />
             <Route exact path="/checkoutpage" element={<CheckoutPage />} />
+            <Route exact path="/testpayment" element={<Testpayment />} />
+            <Route exact path="/cartpage" element={<CartPage />} />
             <Route exact path="/thankyou" element={<ThankYou />} />
             
             <Route exact path="/reset-password/:resetToken" element={<ResetPassword />} />

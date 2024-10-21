@@ -71,7 +71,7 @@ export default function Cart() {
         <div><h1 className='fs-2 text-white'>Total Price: {totalPrice}/-</h1></div>
         <div>
           <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button>
-          <Link className='btn bg-success mt-5 ' to={'/checkoutpage'} > Go to CheckOut Page </Link>
+          <Link className='btn bg-success mt-5 ' to={'/cartpage'} > Go to CheckOut Page </Link>
         </div>
       </div>
 

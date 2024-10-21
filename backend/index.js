@@ -13,6 +13,7 @@ var path = require('path');
 app.use((req, res, next) => {
   const corsWhitelist = [
     "https://online-services-ten.vercel.app",
+    "http://localhost:5173",
     "https://gnj.vercel.app",
 ];
 if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
@@ -24,7 +25,6 @@ if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
 });
 // set path for static assets
 app.use(express.static(path.join(__dirname, 'uploads')));
-
 
 app.use(express.json())
 
