@@ -337,8 +337,8 @@ router.post('/payment', async (req, res) => {
         },
       },
     });
-    console.log(paymentIntent, "paymentIntent ===================");
-    console.log(billingAddress, "paymentIntent ===================");
+    // console.log(paymentIntent, "paymentIntent ===================");
+    // console.log(billingAddress, "paymentIntent ===================");
     
     res.json({ clientSecret: paymentIntent.client_secret });
     // const paymentConfirm = await stripe.paymentIntents.confirm(
@@ -419,10 +419,14 @@ const rawBodyMiddleware = (req, res, next) => {
 
 // Use the raw body middleware for the /webhook route
 router.post('/webhook', rawBodyMiddleware, (req, res) => {
+  console.log("Start Webhook");
+  
   const sig = req.headers['stripe-signature']; // Get the Stripe signature from headers
   const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
   let event;
 
+console.log(sig,"Start Webhook");
+console.log(Buffer.from(req.rawBody, 'utf-8'),"Buffer Output");
   try {
     // Convert the raw body string to a Buffer
     const buf = Buffer.from(req.rawBody, 'utf-8');
