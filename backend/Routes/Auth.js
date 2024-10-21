@@ -406,23 +406,33 @@ router.post('/create-intent', async (req, res) => {
 
 });
 
+// Middleware to capture raw body
+const rawBodyMiddleware = (req, res, next) => {
+  req.rawBody = '';
+  req.on('data', chunk => {
+    req.rawBody += chunk.toString(); // Store the raw body as a string
+  });
+  req.on('end', () => {
+    next();
+  });
+};
 
-router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'];  // Get the Stripe signature from headers
-  let event;
+// Use the raw body middleware for the /webhook route
+router.post('/webhook', rawBodyMiddleware, (req, res) => {
+  const sig = req.headers['stripe-signature']; // Get the Stripe signature from headers
   const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
-  console.log("Req Body:->  ->", req.body);
-  console.log("event:->  ->", event);
-  
+  let event;
+
   try {
-    // Verify the webhook signature with raw body
-    console.log("Try inner Part Here:->  ->", event);
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    // Convert the raw body string to a Buffer
+    const buf = Buffer.from(req.rawBody, 'utf-8');
+    event = stripe.webhooks.constructEvent(buf, sig, endpointSecret);
+    console.log("Event verified successfully:", event);
   } catch (err) {
     console.error('⚠️  Webhook signature verification failed.', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  console.log("event after try and catch:->  ->", event);
+
   // Handle the event type as needed
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object;
@@ -430,8 +440,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
   }
 
   // Return a response to acknowledge receipt of the event
-  res.json({ received: true });
+  res.status(200).json({ received: true });
 });
+
+
 
 // @route    PUT /api/checkout/:id/paymentStatus
 // @desc     Update payment status after successful payment
