@@ -337,8 +337,8 @@ router.post('/payment', async (req, res) => {
         },
       },
     });
-    // console.log(paymentIntent, "paymentIntent ===================");
-    // console.log(billingAddress, "paymentIntent ===================");
+    console.log(paymentIntent, "paymentIntent ===================");
+    console.log(billingAddress, "paymentIntent ===================");
     
     res.json({ clientSecret: paymentIntent.client_secret });
     // const paymentConfirm = await stripe.paymentIntents.confirm(
@@ -406,48 +406,44 @@ router.post('/create-intent', async (req, res) => {
 
 });
 
-// Middleware to capture raw body
-const rawBodyMiddleware = (req, res, next) => {
-  req.rawBody = '';
-  req.on('data', chunk => {
-    req.rawBody += chunk.toString(); // Store the raw body as a string
-  });
-  req.on('end', () => {
-    next();
-  });
-};
+// router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 
-// Use the raw body middleware for the /webhook route
-router.post('/webhook', rawBodyMiddleware, (req, res) => {
-  console.log("Start Webhook");
+//   console.log("start here");
   
-  const sig = req.headers['stripe-signature']; // Get the Stripe signature from headers
-  const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
-  let event;
+//   const sig = req.headers['stripe-signature'];
+//   let event;
 
-console.log(sig,"Start Webhook");
-console.log(Buffer.from(req.rawBody, 'utf-8'),"Buffer Output");
-  try {
-    // Convert the raw body string to a Buffer
-    const buf = Buffer.from(req.rawBody, 'utf-8');
-    event = stripe.webhooks.constructEvent(buf, sig, endpointSecret);
-    console.log("Event verified successfully:", event);
-  } catch (err) {
-    console.error('⚠️  Webhook signature verification failed.', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+//   try {
+//     // Construct and verify the event using the Stripe signature and raw body
+//     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+//     console.log("Stripe event received:", event);
+    
+//   } catch (err) {
+//     console.error(`Webhook signature verification failed: ${err.message}`);
+//     return res.status(400).send(`Webhook Error: ${err.message}`);
+//   }
 
-  // Handle the event type as needed
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
-    console.log('PaymentIntent was successful!', paymentIntent);
-  }
+//   // Handle the event by event type
+//   switch (event.type) {
+//     case 'payment_intent.succeeded':
+//       const paymentIntentSucceeded = event.data.object;
+//       console.log('PaymentIntent was successful!', paymentIntentSucceeded);
+//       // Handle the successful payment here, such as updating order status
+//       break;
 
-  // Return a response to acknowledge receipt of the event
-  res.status(200).json({ received: true });
-});
+//     case 'payment_intent.payment_failed':
+//       const paymentIntentFailed = event.data.object;
+//       console.log('PaymentIntent failed!', paymentIntentFailed);
+//       // Handle the failed payment here
+//       break;
 
+//     default:
+//       console.log(`Unhandled event type ${event.type}`);
+//   }
 
+//   // Send back a response to Stripe to acknowledge receipt of the event
+//   res.status(200).json({ received: true });
+// });
 
 // @route    PUT /api/checkout/:id/paymentStatus
 // @desc     Update payment status after successful payment
