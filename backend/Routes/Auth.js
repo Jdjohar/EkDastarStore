@@ -406,11 +406,11 @@ router.post('/create-intent', async (req, res) => {
 
 });
 
-const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
+
 router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const sig = req.headers['stripe-signature'];  // Get the Stripe signature from headers
   let event;
-
+  const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
   console.log("Req Body:->  ->", req.body);
   console.log("event:->  ->", event);
   
