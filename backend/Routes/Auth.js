@@ -295,7 +295,7 @@ router.post('/checkoutOrder', async (req, res) => {
 // @access   Private
 router.post('/payment', async (req, res) => {
   const { amount, description, userEmail, billingAddress,shippingAddress } = req.body;  // amount should be in cents (e.g., 2500 for $25.00)
-  console.log('Received billingAddress:', billingAddress,shippingAddress);
+  console.log('Received billingAddress:', billingAddress);
  
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -411,14 +411,18 @@ router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
   const sig = req.headers['stripe-signature'];  // Get the Stripe signature from headers
   let event;
 
+  console.log("Req Body:->  ->", req.body);
+  console.log("event:->  ->", event);
+  
   try {
     // Verify the webhook signature with raw body
+    console.log("Try inner Part Here:->  ->", event);
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error('⚠️  Webhook signature verification failed.', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-
+  console.log("event after try and catch:->  ->", event);
   // Handle the event type as needed
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object;
@@ -502,7 +506,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`https://store-ywot.onrender.com/${img}`,
+//           img:`http://localhost:5000/${img}`,
 //           options: JSON.parse(options)
 //         });
 
@@ -571,7 +575,7 @@ router.post('/api/category', upload.single('catimg'), async (req, res) => {
     const newCategory = new Category({
 
       CategoryName,
-      img: `https://store-ywot.onrender.com/${img}`,
+      img: `http://localhost:5000/${img}`,
     });
 
 
