@@ -27,9 +27,9 @@ app.use((req, res, next) => {
   }
   next();
 });
-
+app.use('/', require('./Routes/Webhook'));
 // Apply express.json() for all other routes EXCEPT the webhook
-// app.use(express.json());
+app.use(express.json());
 
 // Default route
 app.get('/', (req, res) => {
@@ -41,73 +41,9 @@ app.use('/api/auth', require('./Routes/Auth'));
 
 // Apply the webhook route without express.json() middleware
 // Webhook needs express.raw() instead of express.json()
-app.use('/', require('./Routes/Webhook'));
 
-// Webhook route that needs the raw body to verify the signature
-// app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-//   const sig = req.headers['stripe-signature'];
 
-//   console.log("Start:sdvs", typeof req.body);
 
-//   // Check the type of req.body
-//   if (Buffer.isBuffer(req.body)) {
-//     console.log('req.body is a Buffer');
-//     console.log('Raw Body String:', req.body.toString('utf-8')); // Convert Buffer to string for logging
-//   } else if (typeof req.body === 'string') {
-//     console.log('req.body is a string');
-//   } else if (typeof req.body === 'object') {
-//     console.log('req.body is a parsed JavaScript object');
-//   } else {
-//     console.log('req.body is of some other type');
-//   }
-
-//   let event;
-//   try {
-//     // Verify the event by reconstructing it with the raw body and the signature
-//     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-//     console.log('✅ Event verified:', event);
-//   } catch (err) {
-//     console.error('❌ Webhook signature verification failed:', err.message);
-//     return res.status(400).send(`Webhook Error: ${err.message}`);
-//   }
-
-//   // Handle the event based on the type
-//   switch (event.type) {
-//     case 'payment_intent.succeeded':
-//       const paymentIntent = event.data.object;
-//       console.log('💰 PaymentIntent was successful:', paymentIntent);
-//       // Handle the payment success (e.g., update order in the database)
-//       break;
-//     case 'payment_intent.payment_failed':
-//       const failedPaymentIntent = event.data.object;
-//       console.log('❌ PaymentIntent failed:', failedPaymentIntent);
-//       // Handle the payment failure
-//       break;
-//     default:
-//       console.log(`Unhandled event type: ${event.type}`);
-//   }
-
-//   // Return a 200 response to acknowledge receipt of the event
-//   res.status(200).json({ received: true });
-// });
-// app.post('/login', express.raw(), (req, res) => {
-//   const requestBody = req.body; // This will be a string now
-
-//   console.log("Received body as string:", requestBody);
-//   console.log("Received body as string:", typeof requestBody);
-
-//   // Parse the requestBody string if needed
-//   const params = new URLSearchParams(requestBody);
-//   const username = params.get('username');
-//   const password = params.get('password');
-
-//   if (!username || !password) {
-//       return res.status(400).send("Username and password are required."); // Return plain string
-//   }
-
-//   // Logic for authenticating the user
-//   res.send("Login successful!"); // Return a plain string
-// });
 
 // Start the server
 app.listen(port, () => {

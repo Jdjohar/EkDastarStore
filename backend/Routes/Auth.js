@@ -518,7 +518,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`https://store-ywot.onrender.com/${img}`,
+//           img:`http://localhost:5000/${img}`,
 //           options: JSON.parse(options)
 //         });
 
@@ -587,7 +587,7 @@ router.post('/api/category', upload.single('catimg'), async (req, res) => {
     const newCategory = new Category({
 
       CategoryName,
-      img: `https://store-ywot.onrender.com/${img}`,
+      img: `http://localhost:5000/${img}`,
     });
 
 

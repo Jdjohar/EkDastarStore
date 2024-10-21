@@ -4,17 +4,6 @@ const stripe = require('stripe')('sk_test_2rB0Mi5MPMyUYAnUv8on1Oef00ZIaFF3Tr'); 
 
 const endpointSecret = 'whsec_74ad17a41718e5668da72735dc5f3e490fcc21a6d24c17ec762cc78137579a92'; // Replace with your Webhook Secret
 
-router.post('/login', (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).send("Username and password are required."); // Return plain string
-    }
-
-    // Logic for authenticating the user
-    // For example, checking against a database
-    res.send("Login successful"); // Return a plain string
-});
 
 
 // Webhook route that needs the raw body to verify the signature
