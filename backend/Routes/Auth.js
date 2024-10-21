@@ -406,7 +406,7 @@ router.post('/create-intent', async (req, res) => {
 
 });
 
-const endpointSecret = 'your-webhook-signing-secret';
+const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
 router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const sig = req.headers['stripe-signature'];
 
