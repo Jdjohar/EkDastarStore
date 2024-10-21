@@ -408,36 +408,24 @@ router.post('/create-intent', async (req, res) => {
 
 const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9';
 router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'];
-
+  const sig = req.headers['stripe-signature'];  // Get the Stripe signature from headers
   let event;
 
   try {
+    // Verify the webhook signature with raw body
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    // Invalid signature
-    console.log(`⚠️  Webhook signature verification failed.`, err.message);
+    console.error('⚠️  Webhook signature verification failed.', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
-  switch (event.type) {
-    case 'payment_intent.succeeded':
-      const paymentIntent = event.data.object; // Contains the payment intent details
-      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-      // Update your order/payment status in your database here
-      break;
-    case 'payment_intent.payment_failed':
-      const failedIntent = event.data.object;
-      console.log(`PaymentIntent for ${failedIntent.amount} has failed.`);
-      // Handle failed payment here
-      break;
-    // Handle other event types as needed
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+  // Handle the event type as needed
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object;
+    console.log('PaymentIntent was successful!', paymentIntent);
   }
 
-  // Return a 200 response to acknowledge receipt of the event
+  // Return a response to acknowledge receipt of the event
   res.json({ received: true });
 });
 
