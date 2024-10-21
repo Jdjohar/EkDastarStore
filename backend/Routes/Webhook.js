@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')('sk_test_2rB0Mi5MPMyUYAnUv8on1Oef00ZIaFF3Tr'); // Replace with your Stripe Secret Key
 
-const endpointSecret = 'whsec_74ad17a41718e5668da72735dc5f3e490fcc21a6d24c17ec762cc78137579a92'; // Replace with your Webhook Secret
+// const endpointSecret = 'whsec_74ad17a41718e5668da72735dc5f3e490fcc21a6d24c17ec762cc78137579a92'; // Replace with your Webhook Secret
+const endpointSecret = 'whsec_au1SfF9CMGH540WDlZxx01LArqhMjkn9'; // Replace with your Webhook Secret
 
 
 
