@@ -256,7 +256,7 @@ router.post('/orderData', async (req, res) => {
 
 router.post('/checkoutOrder', async (req, res) => {
   try {
-    const { billingAddress,userId,userEmail, shippingAddress, orderItems, totalAmount, shippingMethod, shippingCost, paymentMethod } = req.body;
+    const { billingAddress, userId, userEmail, shippingAddress, orderItems, totalAmount, shippingMethod, shippingCost, paymentMethod, paymentStatus } = req.body;
     // const userId = req.user.id;  // Assuming req.user is set by the auth middleware
 
     // Validate request
@@ -272,7 +272,7 @@ router.post('/checkoutOrder', async (req, res) => {
       shippingAddress,
       orderItems,
       totalAmount,
-      paymentStatus: 'pending', // Default as pending, will be updated after payment
+      paymentStatus, // Default as pending, will be updated after payment
       shippingMethod,
       shippingCost,
       paymentMethod
@@ -284,6 +284,132 @@ router.post('/checkoutOrder', async (req, res) => {
     const order = await newOrder.save();
 
     res.status(200).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// Get all orders
+router.get('/orders', async (req, res) => {
+  try {
+    const orders = await Checkout.find(); // Fetch all orders from the database
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+
+
+// Get order by ID
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const order = await Checkout.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+    res.status(200).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// Update order (e.g., payment status)
+router.put('/orders/:id', async (req, res) => {
+  try {
+    const { orderStatus, shippingMethod, shippingCost, paymentMethod, estimatedDelivery,trackingNumber } = req.body;
+
+    // Find the order by ID
+    const order = await Checkout.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+
+    // Update fields if they are provided
+    if (orderStatus) order.orderStatus = orderStatus;
+    if (shippingMethod) order.shippingMethod = shippingMethod;
+    if (shippingCost) order.shippingCost = shippingCost;
+    if (paymentMethod) order.paymentMethod = paymentMethod;
+    if (estimatedDelivery) order.estimatedDelivery = estimatedDelivery;
+    if (trackingNumber) order.trackingNumber = trackingNumber;
+
+    // Save the updated order
+    const updatedOrder = await order.save();
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// Delete an order by ID
+router.delete('/orders/:id', async (req, res) => {
+  try {
+    const order = await Checkout.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+
+    // Delete the order
+    await order.remove();
+
+    res.status(200).json({ msg: 'Order deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// Get orders by user ID
+router.get('/orders/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const orders = await Checkout.find({ userId }); // Find orders by userId
+    if (!orders.length) {
+      return res.status(404).json({ msg: 'No orders found for this user' });
+    }
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+router.post('/userorders', async (req, res) => {
+  const userId = req.body.userId; // Extract userId from the body
+
+  if (!userId) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
+
+  try {
+    // Find all orders that match the provided userId
+    const orders = await Checkout.find({ userId: userId });
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ message: 'No orders found for this user' });
+    }
+
+    // Return the orders
+    res.status(200).json(orders);
+  } catch (error) {
+    // Error handling
+    console.error(error);
+    res.status(500).json({ message: 'Server error while fetching orders' });
+  }
+});
+
+
+// Get orders by payment status
+router.get('/orders/status/:status', async (req, res) => {
+  try {
+    const status = req.params.status;
+    const orders = await Checkout.find({ paymentStatus: status }); // Find orders by paymentStatus
+    res.status(200).json(orders);
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: 'Server Error' });
@@ -341,12 +467,7 @@ router.post('/payment', async (req, res) => {
     console.log(billingAddress, "paymentIntent ===================");
     
     res.json({ clientSecret: paymentIntent.client_secret });
-    // const paymentConfirm = await stripe.paymentIntents.confirm(
-    //   paymentIntent.id,
-    //   { payment_method: "pm_card_visa" }
-    // );
-    // res.status(200).send(paymentConfirm);
-    // console.log(paymentConfirm);
+  
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: 'Payment processing failed' });
@@ -518,7 +639,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`https://store-ywot.onrender.com/${img}`,
+//           img:`http://localhost:5000/${img}`,
 //           options: JSON.parse(options)
 //         });
 
@@ -542,7 +663,7 @@ router.get('/products/:productId', async (req, res) => {
 router.post('/addproducts', upload.single('img'), async (req, res) => {
   try {
     // Extract product data from the request body
-    const { name, description, CategoryName, options } = req.body;
+    const { name, description, CategoryName, options, featured } = req.body;
     const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
       upload_preset: 'employeeApp', // Use the preset from Cloudinary
     });
@@ -554,16 +675,13 @@ router.post('/addproducts', upload.single('img'), async (req, res) => {
       CategoryName,
       img: uploadedImg.secure_url, // Cloudinary image URL
       options: JSON.parse(options),
+      featured
     });
-
-
-
     // Save the product to the database
     const savedProduct = await newProduct.save();
 
     // Update global food data
     global.foodData.push(savedProduct); // Add the new product to the global variable
-
     res.status(201).json({
       status: 'success',
       data: savedProduct,
@@ -574,44 +692,247 @@ router.post('/addproducts', upload.single('img'), async (req, res) => {
   }
 });
 
-// Define a route to handle product creation
-router.post('/api/category', upload.single('catimg'), async (req, res) => {
-
+router.get('/product', async (req, res) => {
   try {
-    // Extract product data from the request body
-    const { CategoryName } = req.body;
-    const img = req.file.filename;
-    //   const optionss = JSON.parse(options);
-    console.log(img);
-    // Create a new product instance
-    const newCategory = new Category({
-
-      CategoryName,
-      img: `https://store-ywot.onrender.com/${img}`,
-    });
-
-
-
-    // Save the product to the database
-    const savedCategory = await newCategory.save();
-    res.status(201).json({
+    const products = await Products.find(); // Fetch all products from the database
+    res.status(200).json({
       status: 'success',
-      data: savedCategory
+      data: products,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/product/:id', async (req, res) => {
+  try {
+    const product = await Products.findById(req.params.id); // Find product by ID
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.status(200).json({
+      status: 'success',
+      data: product,
+    });
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.put('/product/:id', upload.single('img'), async (req, res) => {
+  try {
+    const { name, description, CategoryName, options } = req.body;
+    let updatedProduct = {
+      name,
+      description,
+      CategoryName,
+      options: JSON.parse(options), // Assuming options is sent as a JSON string
+    };
+
+    // If a new image is uploaded, upload to Cloudinary and update the image URL
+    if (req.file) {
+      const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
+        upload_preset: 'employeeApp',
+      });
+      updatedProduct.img = uploadedImg.secure_url;
+    }
+
+    // Update the product in the database
+    const product = await Products.findByIdAndUpdate(req.params.id, updatedProduct, {
+      new: true, // Return the updated document
+      runValidators: true, // Ensure validation is run
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: product,
+    });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.delete('/product/:id', async (req, res) => {
+  try {
+    const product = await Products.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Optionally, delete the image from Cloudinary
+    const imagePublicId = product.img.split('/').pop().split('.')[0]; // Extract the public ID from the image URL
+    await cloudinary.uploader.destroy(imagePublicId); // Delete image from Cloudinary
+
+    await product.remove(); // Remove product from the database
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Product deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/product/search', async (req, res) => {
+  try {
+    const searchTerm = req.query.q; // Query parameter for search term
+    const products = await Products.find({
+      $or: [
+        { name: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive name search
+        { CategoryName: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive category search
+      ],
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: products,
+    });
+  } catch (error) {
+    console.error('Error searching for products:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 
+
+// POST /api/category/addcategory
+router.post('/addcategory', upload.single('img'), async (req, res) => {
+  try {
+    const { CategoryName } = req.body;
+
+    // Upload image to Cloudinary
+    const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
+      upload_preset: 'employeeApp',
+    });
+
+    // Create new category
+    const newCategory = new Category({
+      CategoryName,
+      img: uploadedImg.secure_url,
+    });
+
+    // Save to the database
+    const savedCategory = await newCategory.save();
+    global.foodCategory.push(savedCategory);
+    res.status(201).json({
+      status: 'success',
+      data: savedCategory,
+    });
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
 //get a list of Category
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await Category.find();
-    res.json(categories);
+    const categories = await Category.find(); // Get all categories from MongoDB
+    res.status(200).json({
+      status: 'success',
+      data: categories,
+    });
   } catch (error) {
+    console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/categories/:id', async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    res.status(200).json({
+      status: 'success',
+      data: category,
+    });
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
+router.put('/categories/:id', upload.single('img'), async (req, res) => {
+  try {
+    const { CategoryName } = req.body;
+
+    // Find the existing category
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Check if a new image is provided and upload to Cloudinary
+    if (req.file) {
+      const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
+        upload_preset: 'employeeApp',
+      });
+      category.img = uploadedImg.secure_url; // Update image URL
+    }
+
+    // Update the category name
+    category.CategoryName = CategoryName || category.CategoryName;
+
+    // Save the updated category
+    const updatedCategory = await category.save();
+    res.status(200).json({
+      status: 'success',
+      data: updatedCategory,
+    });
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/category/:id
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    res.status(200).json({
+      status: 'success',
+      message: 'Category deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// routes/category.js (continuation)
+// API to fetch products by categoryName
+router.get('/products/category/:categoryName', async (req, res) => {
+  try {
+      const categoryName = req.params.categoryName;
+      const products = await Products.find({ CategoryName: categoryName });
+
+      if (products.length === 0) {
+          return res.status(404).json({ message: 'No products found for this category' });
+      }
+
+      res.json(products);
+  } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 

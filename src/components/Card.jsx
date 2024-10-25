@@ -13,6 +13,8 @@ export default function Card(props) {
 
   let options = props.options;
   let priceOptions = Object.keys(options);
+  // console.log(priceOptions,"priceOptions");
+
   let foodItem = props.item;
   const dispatch = useDispatchCart();
   const handleClick = () => {
@@ -27,40 +29,43 @@ export default function Card(props) {
     setSize(e.target.value);
   }
   const handleAddToCart = async () => {
+    // Parse the original single-item price for the selected size
+    let singleItemPrice = parseInt(options[size]);
+    
+    // Find if the item with the same id and size already exists in the cart
     let food = data.find(item => item.id === foodItem._id && item.size === size);
-
+    console.log(food, "food Test");
+  
     if (food) {
-        // If the product with the same size exists in the cart, update its quantity
-        let updatedPrice = qty * parseInt(options[size]);  // Calculate the new price
-
-        await dispatch({
-            type: "UPDATE",
-            id: foodItem._id,
-            price: updatedPrice,  // Pass the recalculated price
-            qty: qty,  // Pass the new quantity
-            size: size  // Make sure size is included
-        });
+      // If the item already exists, update only the quantity and the total cost
+      await dispatch({
+        type: "UPDATE",
+        id: foodItem._id,
+        price: singleItemPrice,  // Use the single-item price
+        qty: qty,  // Update quantity
+        size: size
+      });
     } else {
-        // If the product doesn't exist in the cart, add it as a new item
-        let finalPrice = qty * parseInt(options[size]);
-
-        await dispatch({
-            type: "ADD",
-            id: foodItem._id,
-            name: foodItem.name,
-            price: finalPrice,
-            qty: qty,
-            size: size,
-            img: props.ImgSrc
-        });
+      // If the item does not exist, add it as a new entry with the single-item price
+      await dispatch({
+        type: "ADD",
+        id: foodItem._id,
+        name: foodItem.name,
+        price: singleItemPrice,  // Use the single-item price
+        qty: qty,
+        size: size,
+        img: props.ImgSrc
+      });
     }
-};
+  };
+  
 
   useEffect(() => {
-    if (priceOptions.length > 0) {
-      setSize(priceOptions[0]);  // Set default size
-    }
-  }, [priceOptions]);
+    setSize(priceRef.current.value)
+    // if (priceOptions.length > 0) {
+    //   setSize(priceOptions[0]);  // Set default size
+    // }
+  }, []);
 
   // useEffect(()=>{
   // checkBtn();
@@ -72,33 +77,36 @@ export default function Card(props) {
   // console.log(totval)
   return (
     <div>
-      <div className="card mt-3" key={props.item._id} style={{ maxHeight: "360px" }}>
-        <img src={props.ImgSrc} className="card-img-top" alt="..." style={{ height: "120px", objectFit: "fill" }} />
+      {console.log(props, "props")}
+      <div className="card1  text-center mt-3" key={props.item._id} style={{ maxHeight: "400px" }}>
+        <img src={props.ImgSrc} className="card-img-top" alt="..." style={{ height: "220px", objectFit: "cover" }} />
         <div className="card-body">
-          <Link key={foodItem._id} to={`/viewproduct/${foodItem._id}`}>
-
-            <h5 className="card-title">{props.foodName}</h5>
+          <div className='category-list py-2'>
+            <Link className='text-decoration-none' to={`admin/products/${props.CategoryName}`}>{props.CategoryName} </Link>
+          </div>
+          <Link className='text-decoration-none' key={foodItem._id} to={`/viewproduct/${foodItem._id}`}>
+            <h5 className="card-title product-title text-dark">{props.foodName}</h5>
 
           </Link>
           {/* <p className="card-text">This is some random text. This is description.</p> */}
           <div className='container w-100 p-0' style={{}}>
-            <select className="m-2 h-100 w-20 bg-success text-black rounded" style={{ select: "#FF0000" }} onClick={handleClick} onChange={handleQty}>
+            <select className="m-2 h-100 w-20 text-black rounded" style={{ select: "#FF0000" }} onClick={handleClick} onChange={handleQty}>
               {Array.from(Array(6), (e, i) => {
                 return (
                   <option key={i + 1} value={i + 1}>{i + 1}</option>)
               })}
             </select>
-            <select className="m-2 h-100 w-20 bg-success text-black rounded" style={{ select: "#FF0000" }} ref={priceRef} onClick={handleClick} onChange={handleOptions}>
+            <select className="m-2 h-100 w-20 text-black rounded" style={{ select: "#FF0000" }} ref={priceRef} onClick={handleClick} onChange={handleOptions}>
               {priceOptions.map((i) => {
                 return <option key={i} value={i}>{i}</option>
               })}
             </select>
             <div className=' d-inline ms-2 h-100 w-20 fs-5' >
-              ₹{finalPrice}/-
+              ${finalPrice}/-
             </div>
           </div>
           <hr></hr>
-          <button className={`btn btn-success justify-center ms-2 `} onClick={handleAddToCart}>Add to Cart</button>
+          <button className={`btn btn-success golden-button justify-center ms-2 `} onClick={handleAddToCart}>Add to Cart</button>
           {/* <button className={`btn btn-danger justify-center ms-2 ${btnEnable ? "" : "disabled"}`} onClick={handleRemoveCart}>Remove</button> */}
         </div>
       </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 import { useCart, useDispatchCart } from '../components/ContextReducer';
-import Navbar from '../components/Navbar';
+import Navbar2 from '../components/Navbar2';
 import Footer from '../components/Footer';
-import { Link,useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 
 const CartPage = () => {
@@ -23,8 +23,10 @@ const CartPage = () => {
 
     const calculateTotal = () => {
         let total = 0;
+        console.log(cart, "cart");
+
         cart.forEach((item) => {
-            total += item.price * item.qty;
+            total += ((item.price)) * item.qty;
         });
         return total; // Keep the total in dollars
     };
@@ -38,7 +40,7 @@ const CartPage = () => {
         }
 
         try {
-            const { error: backendError, clientSecret } = await fetch('https://store-ywot.onrender.com/api/auth/payment', {
+            const { error: backendError, clientSecret } = await fetch('http://localhost:5000/api/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -74,7 +76,7 @@ const CartPage = () => {
 
                 let userEmail = localStorage.getItem("userEmail");
                 // console.log(data,localStorage.getItem("userEmail"),new Date())
-                let response = await fetch("https://store-ywot.onrender.com/api/auth/orderData", {
+                let response = await fetch("http://localhost:5000/api/auth/orderData", {
                     // credentials: 'include',
                     // Origin:"http://localhost:3000/login",
                     method: 'POST',
@@ -107,56 +109,69 @@ const CartPage = () => {
 
         <>
 
-        <Navbar />
-        <div className='container py-5'>
-            <h1>Cart</h1>
-            <div className='row'>
-                <div className='col-12 col-md-7'>
-                    <div className="table-responsive">
-                        <table className="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Qty</th>
-                                    <th>Price</th>
-                                    <th>Image</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {cart.map((item, id) => (
-                                    <tr key={id}>
-                                        <td>{item.name}</td>
-                                        <td>{item.qty}</td>
-                                        <td>${item.price.toFixed(2)}</td>
-                                        <td><img src={item.img} alt={item.name} style={{ width: '50px' }} /></td>
+            <Navbar2 />
+            <div className='container py-5'>
+                <h1 className='py-5'>Shopping Cart</h1>
+                <div className='row'>
+                    <div className='col-12 col-md-8'>
+                        <div className="table-responsive">
+                            <table className="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>Qty</th>
+                                        <th>Price</th>
+                                        <th>Image</th>
                                     </tr>
-                                ))}
-                                <tr>
-                                    <td colSpan="2"></td>
-                                    <td><strong>Total:</strong></td>
-                                    <td><strong>${calculateTotal().toFixed(2)}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {cart.map((item, id) => (
+                                        <tr key={id}>
+                                            <td>
+
+                                                <div class="d-flex flex-row align-items-center">
+                                                    <div>
+                                                        <img
+                                                            src={item.img}
+                                                            class="img-fluid rounded-3" alt={item.name} style={{ width: '65px' }} />
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <h5>{item.name}</h5>
+                                                        <p class="small mb-0">{item.size}meter</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{item.qty}</td>
+                                            <td>${((item.price) * (item.qty)).toFixed(2)}</td>
+                                            <td><img src={item.img} alt={item.name} style={{ width: '50px' }} /></td>
+                                        </tr>
+                                    ))}
+                                    <tr>
+                                        <td colSpan="2"></td>
+                                        <td><strong>Total:</strong></td>
+                                        <td><strong>${calculateTotal().toFixed(2)} AUD</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                     </div>
 
-                </div>
+                    <div className='col-12 col-md-4'>
 
-                <div className='col-12 col-md-5'>
-
-                <h3>Cart Total</h3>
-                    <div className="d-flex justify-content-between mb-2">
-                        <span>Subtotal:</span>
-                        <span>${calculateTotal().toFixed(2)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-2">
-                        <span>Tax:</span>
-                        <span>$0.00</span>
-                    </div>
-                    <div className=" mb-2">
-                        <Link className='btn btn-success' to={'/checkoutpage'}>Proceed to Checkout</Link>
-                    </div>
-                    {/* <form onSubmit={handleSubmit}>
+                        <h3>Cart Total</h3>
+                        <div className="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>${calculateTotal().toFixed(2)} AUD</span>
+                        </div>
+                        {/* <div className="d-flex justify-content-between mb-2">
+                            <span>Tax:</span>
+                            <span>$0.00</span>
+                        </div> */}
+                        <div className=" mb-2">
+                            <Link className='btn btn-success' to={'/checkoutpage'}>Proceed to Checkout</Link>
+                        </div>
+                        {/* <form onSubmit={handleSubmit}>
                         <div>
                             <label style={{ width: '100%' }}>
                                 Card details
@@ -183,13 +198,13 @@ const CartPage = () => {
                             {loading ? 'Loading...' : 'Pay Now'}
                         </button>
                     </form> */}
+                    </div>
                 </div>
+
+
+
             </div>
-
-
-
-        </div>
-        <Footer />
+            <Footer />
         </>
     );
 };

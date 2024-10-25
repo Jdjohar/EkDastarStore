@@ -2,90 +2,77 @@ import React, { useState } from 'react';
 import AdminNavbar from './components/AdminNavbar';
 
 const AddCategory = () => {
-  const [staticFormData, setStaticFormData] = useState({
-    CategoryName: '',
-    catimg: '',
+  const [categoryData, setCategoryData] = useState({
+    categoryName: '',
+    img: null,  // For image file upload
   });
- 
 
-
-  const handleStaticInputChange = (fieldName, value) => {
-    setStaticFormData({
-      ...staticFormData,
-      [fieldName]: fieldName == 'catimg' ? value.target.files[0] : value,
+  const handleInputChange = (fieldName, value) => {
+    setCategoryData({
+      ...categoryData,
+      [fieldName]: fieldName === 'img' ? value.target.files[0] : value,
     });
   };
 
-  
-
   const handleSubmit = async (e) => {
-  
+    e.preventDefault();
 
     const formData = new FormData();
-
-    
-    formData.append('CategoryName', staticFormData.CategoryName);
-
-    // Append file data to FormData
-    formData.append('catimg', staticFormData.catimg);
-
+    formData.append('CategoryName', categoryData.categoryName);
+    formData.append('img', categoryData.img);  // Append the image file
 
     try {
-    
-      const response = await fetch('https://store-ywot.onrender.com/api/auth/api/category', {
+      const response = await fetch('http://localhost:5000/api/auth/addcategory', {
         method: 'POST',
-        headers: {
-
-        },
         body: formData,
       });
-      console.log('strt2');
+
       if (response.ok) {
-        console.log('strt 3');
-        const data = await response.json();
-        console.log('API Response:', data);
+        alert('Category added successfully');
+        setCategoryData({ categoryName: '', img: null }); // Reset the form
       } else {
-        console.error('API Error:', response.statusText);
+        console.error('Failed to add category:', response.statusText);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error('Error adding category:', error.message);
     }
   };
 
   return (
     <>
       <AdminNavbar />
-      <div className='container py-5'>
-        <div className='row'>
-        <div className='col-md-6 offset-md-3'>
-          <form encType="multipart/form-data">
-         
-           
-            <div className='form-group mb-3'>
-              <label> Category Name</label>
-              <input
-                type='text'
-                name='CategoryName'
-                className='form-control'
-                value={staticFormData.CategoryName}
-                onChange={(e) => handleStaticInputChange('CategoryName', e.target.value)}
-              />
-            </div>
-            <div className='form-group mb-3'>
-              <label>Category Image</label>
-              <input
-                type='file'
-                name='catimg'
-                className='form-control'
-                onChange={(e) => handleStaticInputChange('catimg', e)}
-              />
-            </div>
+      <div className="container py-5">
+        <div className="row py-5">
+          <div className="col-md-6 offset-md-3">
+            <h2>Add New Category</h2>
+            <form onSubmit={handleSubmit} encType="multipart/form-data">
+              <div className="form-group mb-3">
+                <label>Category Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={categoryData.categoryName}
+                  onChange={(e) => handleInputChange('categoryName', e.target.value)}
+                  required
+                />
+              </div>
 
-            <button type='button' onClick={handleSubmit}>
-              Submit
-            </button>
-          </form>
-        </div>
+              <div className="form-group mb-3">
+                <label>Category Image</label>
+                <input
+                  type="file"
+                  name="img"
+                  className="form-control"
+                  onChange={(e) => handleInputChange('img', e)}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary">
+                Add Category
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </>

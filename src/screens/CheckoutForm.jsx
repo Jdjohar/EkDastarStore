@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {loadStripe} from '@stripe/stripe-js';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart, useDispatchCart } from '../components/ContextReducer';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar2';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 const CheckoutForm = () => {
@@ -54,7 +54,7 @@ const CheckoutForm = () => {
             console.log("Step 1");
     
             // Step 1: Create a Stripe Customer
-            const customerResponse = await fetch('https://store-ywot.onrender.com/api/auth/create-customer', {
+            const customerResponse = await fetch('http://localhost:5000/api/auth/create-customer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ const CheckoutForm = () => {
             console.log("Customer created:", customerId);
     
             // Step 2: Create a PaymentIntent with the customer ID
-            const response = await fetch('https://store-ywot.onrender.com/api/auth/payment', {
+            const response = await fetch('http://localhost:5000/api/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const CheckoutForm = () => {
             const userid = localStorage.getItem('userId');
             const useremail = localStorage.getItem('userEmail');
             if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const checkoutResponse = await fetch("https://store-ywot.onrender.com/api/auth/checkoutOrder", {
+                const checkoutResponse = await fetch("http://localhost:5000/api/auth/checkoutOrder", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -157,7 +157,9 @@ const CheckoutForm = () => {
                         billingAddress: billingAddress,
                         shippingAddress: shippingAddress,
                         paymentMethod: 'Stripe',
+                        orderStatus:"Processing",
                         shippingCost: 0,
+                        paymentStatus:"paid",
                         shippingMethod: 'ByPost',
                         totalAmount: paymentIntent.amount,
                     }),
@@ -404,11 +406,11 @@ const CheckoutForm = () => {
                             </div>
                             <div className="d-flex justify-content-between">
                                 <span>Shipping</span>
-                                <span>Canada Post - $19.00</span>
+                                <span>Free Shipping in Australia</span>
                             </div>
                             <div className="d-flex justify-content-between">
                                 <span>Total</span>
-                                <span>${calculateTotal() + 19.00}</span>
+                                <span>${calculateTotal()}</span>
                             </div>
                         </div>
                         <h4 className='pt-5'>Payment Details</h4>

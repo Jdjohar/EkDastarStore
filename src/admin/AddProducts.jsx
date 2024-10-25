@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminNavbar from './components/AdminNavbar';
+import { useNavigate } from 'react-router-dom';
 
 const AddProduct = () => {
   const [staticFormData, setStaticFormData] = useState({
@@ -7,19 +8,20 @@ const AddProduct = () => {
     description: '',
     CategoryName: '',
     img: '',
+    featured: false // Keep this as a boolean
   });
 
-  const [options, setoptions] = useState([{ key: '', value: '' }]);
+  const navigate = useNavigate();
+  const [options, setOptions] = useState([{ key: '', value: '' }]);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    // Fetch categories from API
     const fetchCategories = async () => {
       try {
-        const response = await fetch('https://store-ywot.onrender.com/api/auth/categories');
+        const response = await fetch('http://localhost:5000/api/auth/categories');
         if (response.ok) {
           const data = await response.json();
-          setCategories(data);
+          setCategories(data.data);
         } else {
           console.error('Failed to fetch categories:', response.statusText);
         }
@@ -29,65 +31,30 @@ const AddProduct = () => {
     };
 
     fetchCategories();
-  }, []); // Empty dependency array ensures that the effect runs only once on mount
+  }, []); // Runs once on mount
 
   const handleStaticInputChange = (fieldName, value) => {
-    setStaticFormData({
-      ...staticFormData,
+    setStaticFormData((prevData) => ({
+      ...prevData,
       [fieldName]: fieldName === 'img' ? value.target.files[0] : value,
-    });
+    }));
   };
 
   const handleDynamicInputChange = (index, keyOrValue, value) => {
-    const newoptions = [...options];
-    newoptions[index][keyOrValue] = value;
-    setoptions(newoptions);
+    const newOptions = [...options];
+    newOptions[index][keyOrValue] = value;
+    setOptions(newOptions);
   };
 
   const handleAddNew = () => {
-    setoptions([...options, { key: '', value: '' }]);
+    setOptions([...options, { key: '', value: '' }]);
   };
 
   const handleRemove = (index) => {
     const newOptions = [...options];
     newOptions.splice(index, 1);
-    setoptions(newOptions);
+    setOptions(newOptions);
   };
-
-  // const handleSubmit = async (e) => {
-  //   const formData = new FormData();
-  //   formData.append('name', staticFormData.name);
-  //   formData.append('description', staticFormData.description);
-  //   formData.append('CategoryName', staticFormData.CategoryName);
-  //   formData.append('img', staticFormData.img);
-
-  //   const opt = JSON.stringify([
-  //     options.reduce((acc, { key, value }) => {
-  //       if (key && value) {
-  //         acc[key] = value;
-  //       }
-  //       return acc;
-  //     }, {}),
-  //   ]);
-  //   formData.append('options', opt);
-
-  //   try {
-  //     const response = await fetch('https://store-ywot.onrender.com/api/auth/addproducts', {
-  //       method: 'POST',
-  //       headers: {},
-  //       body: formData,
-  //     });
-
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       console.log('API Response:', data);
-  //     } else {
-  //       console.error('API Error:', response.statusText);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error:', error.message);
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,7 +63,9 @@ const AddProduct = () => {
     formData.append('name', staticFormData.name);
     formData.append('description', staticFormData.description);
     formData.append('CategoryName', staticFormData.CategoryName);
-    formData.append('img', staticFormData.img);  // Image file
+    formData.append('img', staticFormData.img);
+    formData.append('featured', staticFormData.featured); // Use boolean directly
+
     const opt = JSON.stringify(
       options.reduce((acc, { key, value }) => {
         if (key && value) {
@@ -108,7 +77,7 @@ const AddProduct = () => {
     formData.append('options', opt);
   
     try {
-      const response = await fetch('https://store-ywot.onrender.com/api/auth/addproducts', {
+      const response = await fetch('http://localhost:5000/api/auth/addproducts', {
         method: 'POST',
         body: formData,
       });
@@ -116,6 +85,8 @@ const AddProduct = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Product added:', data);
+        // Uncomment the line below to navigate after submission
+        // navigate('/admin/productlist');
       } else {
         console.error('API Error:', response.statusText);
       }
@@ -123,13 +94,14 @@ const AddProduct = () => {
       console.error('Error:', error.message);
     }
   };
+
   return (
     <>
       <AdminNavbar />
       <div className='container py-5'>
-        <div className='row'>
+        <div className='row py-5'>
           <div className='col-md-6 offset-md-3'>
-            <form encType='multipart/form-data'>
+            <form onSubmit={handleSubmit} encType='multipart/form-data'> {/* Handle submit with onSubmit */}
               <div className='form-group mb-3'>
                 <label>Product Name</label>
                 <input
@@ -200,10 +172,21 @@ const AddProduct = () => {
                   onChange={(e) => handleStaticInputChange('img', e)}
                 />
               </div>
+              <div className='form-group mb-3'>
+                <label>Product Featured</label>
+                <select
+                  name='featured'
+                  className='form-control'
+                  value={staticFormData.featured}
+                  onChange={(e) => handleStaticInputChange('featured', e.target.value === 'true')}
+                >
+                  <option value=''>Select Option</option>
+                  <option value='true'>True</option>
+                  <option value='false'>False</option>
+                </select>
+              </div>
 
-              <button type='button' onClick={handleSubmit}>
-                Submit
-              </button>
+              <button type='submit'>Submit</button> {/* Changed type to submit */}
             </form>
           </div>
         </div>

@@ -1,101 +1,87 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar2';
 
 export default function MyOrder() {
+    const [orderData, setOrderData] = useState([]);
+    const [error, setError] = useState(null);
+    const userId = localStorage.getItem("userId");
 
-    const [orderData, setorderData] = useState({})
+    const fetchUserOrders = async () => {
+        if (!userId) {
+            setError('User ID is not found in local storage.');
+            return;
+        }
 
-    const fetchMyOrder = async () => {
-        console.log(localStorage.getItem('userEmail'))
-        await fetch("https://store-ywot.onrender.com/api/auth/myOrderData", {
-            // credentials: 'include',
-            // Origin:"http://localhost:3000/login",
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body:JSON.stringify({
-                email:localStorage.getItem('userEmail')
-            })
-        }).then(async (res) => {
-            let response = await res.json()
-            await setorderData(response)
-        })
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/userorders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }), // Sending userId in the request body
+            });
 
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
 
-
-        // await res.map((data)=>{
-        //    console.log(data)
-        // })
-
-
-    }
+            const data = await response.json();
+            console.log(data);
+            setOrderData(data); // Set the orders in state
+        } catch (err) {
+            setError(err.message); // Set error message if request fails
+        }
+    };
 
     useEffect(() => {
-        fetchMyOrder()
-    }, [])
+        fetchUserOrders();
+    }, []);
+
+    // Function to format currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD', // Change to the desired currency
+        }).format(amount / 100); // Assuming the totalAmount is in cents
+    };
 
     return (
         <div>
-            <div>
-                <Navbar />
-            </div>
-
-            <div className='container'>
-                <div className='row'>
-
-                    {orderData != {} ? Array(orderData).map(data => {
-                        return (
-                            data.orderData ?
-                                data.orderData.order_data.slice(0).reverse().map((item) => {
-                                    return (
-                                        item.map((arrayData) => {
-                                            return (
-                                                <div  >
-                                                    {arrayData.Order_date ? <div className='m-auto mt-5'>
-
-                                                        {data = arrayData.Order_date}
-                                                        <hr />
-                                                    </div> :
-
-                                                        <div className='col-12 col-md-6 col-lg-3' >
-                                                            <div className="card mt-3" style={{ width: "16rem", maxHeight: "360px" }}>
-                                                                <img src={arrayData.img} className="card-img-top" alt="..." style={{ height: "120px", objectFit: "fill" }} />
-                                                                <div className="card-body">
-                                                                    <h5 className="card-title">{arrayData.name}</h5>
-                                                                    <div className='container w-100 p-0' style={{ height: "38px" }}>
-                                                                        <span className='m-1'>{arrayData.qty}</span>
-                                                                        <span className='m-1'>{arrayData.size}</span>
-                                                                        <span className='m-1'>{data}</span>
-                                                                        <div className=' d-inline ms-2 h-100 w-20 fs-5' >
-                                                                            ₹{arrayData.price}/-
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-
-
-
-                                                    }
-
+            <Navbar />
+            <div className='container py-5'>
+                <div className='row py-5'>
+                    <h2>My Orders</h2>
+                    <hr />
+                    {error && <div className="alert alert-danger">{error}</div>}
+                    {orderData.length > 0 ? orderData.map((order) => (
+                        <div key={order._id} className="col-12 mb-4">
+                            <h5>Order Date: {new Date(order.orderDate).toLocaleDateString()}</h5>
+                            <div className="d-flex flex-wrap">
+                                {order.orderItems.map(item => (
+                                    <div key={item._id} className="card mt-3 me-2" style={{ width: "16rem", maxHeight: "360px" }}>
+                                        <div className="card-body">
+                                            <h5 className="card-title">{item.name}</h5>
+                                            <div className='container w-100 p-0' style={{ height: "38px" }}>
+                                                <span className='m-1'>{item.qty}</span>
+                                                <span className='m-1'>{item.size}</span>
+                                                <div className='d-inline ms-2 h-100 w-20 fs-5'>
+                                                    ${item.price} /-
                                                 </div>
-                                            )
-                                        })
-
-                                    )
-                                }) : ""
-                        )
-                    }) : ""}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-3">
+                                <strong>Total Amount: {formatCurrency(order.totalAmount)}</strong>
+                            </div>
+                            <hr />
+                        </div>
+                    )) : <p>No orders found.</p>}
                 </div>
-
-
             </div>
-
             <Footer />
         </div>
-    )
+    );
 }
-// {"orderData":{"_id":"63024fd2be92d0469bd9e31a","email":"mohanDas@gmail.com","order_data":[[[{"id":"62ff20fbaed6a15f800125e9","name":"Chicken Fried Rice","qty":"4","size":"half","price":520},{"id":"62ff20fbaed6a15f800125ea","name":"Veg Fried Rice","qty":"4","size":"half","price":440}],"2022-08-21T15:31:30.239Z"],[[{"id":"62ff20fbaed6a15f800125f4","name":"Mix Veg Pizza","qty":"4","size":"medium","price":800},{"id":"62ff20fbaed6a15f800125f3","name":"Chicken Doub;e Cheeze Pizza","qty":"4","size":"regular","price":480}],"2022-08-21T15:32:38.861Z"]],"__v":0}}

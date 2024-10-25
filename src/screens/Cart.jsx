@@ -20,7 +20,7 @@ export default function Cart() {
   const handleCheckOut = async () => {
     let userEmail = localStorage.getItem("userEmail");
     // console.log(data,localStorage.getItem("userEmail"),new Date())
-    let response = await fetch("https://store-ywot.onrender.com/api/auth/orderData", {
+    let response = await fetch("http://localhost:5000/api/auth/orderData", {
       // credentials: 'include',
       // Origin:"http://localhost:3000/login",
       method: 'POST',
@@ -39,7 +39,7 @@ export default function Cart() {
     }
   }
 
-  let totalPrice = data.reduce((total, food) => total + food.price, 0)
+  let totalPrice = data.reduce((total, food) => total + (food.price * food.qty), 0)
   return (
     <div>
 
@@ -57,18 +57,20 @@ export default function Cart() {
             </tr>
           </thead>
           <tbody>
+            {console.log(data,"data")
+            }
             {data.map((food, index) => (
               <tr className='text-white'>
                 <th scope='row' >{index + 1}</th>
                 <td >{food.name}</td>
                 <td>{food.qty}</td>
                 <td>{food.size}</td>
-                <td>{food.price}</td>
+                <td>${food.price * food.qty}</td>
                 <td ><button type="button" className="btn p-0"><p className='text-danger' onClick={() => { dispatch({ type: "REMOVE", index: index }) }}> X </p></button> </td></tr>
             ))}
           </tbody>
         </table>
-        <div><h1 className='fs-2 text-white'>Total Price: {totalPrice}/-</h1></div>
+        <div><h1 className='fs-2 text-white'>Total Price: ${totalPrice}/-</h1></div>
         <div>
           <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button>
           <Link className='btn bg-success mt-5 ' to={'/cartpage'} > Go to CheckOut Page </Link>
