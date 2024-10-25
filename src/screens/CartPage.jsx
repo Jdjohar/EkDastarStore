@@ -40,7 +40,7 @@ const CartPage = () => {
         }
 
         try {
-            const { error: backendError, clientSecret } = await fetch('http://localhost:5000/api/auth/payment', {
+            const { error: backendError, clientSecret } = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const CartPage = () => {
 
                 let userEmail = localStorage.getItem("userEmail");
                 // console.log(data,localStorage.getItem("userEmail"),new Date())
-                let response = await fetch("http://localhost:5000/api/auth/orderData", {
+                let response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
                     // credentials: 'include',
                     // Origin:"http://localhost:3000/login",
                     method: 'POST',

@@ -11,7 +11,7 @@ const ProductCatwise = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/auth/products/category/${categoryName}`);
+                const response = await fetch(`https://ekdastar.onrender.com/api/auth/products/category/${categoryName}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

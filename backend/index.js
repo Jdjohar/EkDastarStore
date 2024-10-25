@@ -16,9 +16,8 @@ app.use(express.static(path.join(__dirname, 'uploads')));
 // CORS setup
 app.use((req, res, next) => {
   const corsWhitelist = [
-    "https://online-services-ten.vercel.app",
+    "https://ek-dastar-store.vercel.app/",
     "http://localhost:5173",
-    "https://gnj.vercel.app",
   ];
   if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);

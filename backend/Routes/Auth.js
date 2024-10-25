@@ -639,7 +639,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`http://localhost:5000/${img}`,
+//           img:`https://ekdastar.onrender.com/${img}`,
 //           options: JSON.parse(options)
 //         });
 

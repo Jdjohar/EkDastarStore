@@ -294,7 +294,7 @@ router.post('/api/products', upload.single('img'), async (req, res) => {
           name,
           description,
           CategoryName,
-          img:`http://localhost:5000/${img}`,
+          img:`https://ekdastar.onrender.com/${img}`,
           options: JSON.parse(options)
         });
         
@@ -327,7 +327,7 @@ router.post('/api/category', upload.single('catimg'), async (req, res) => {
       const newCategory = new Category({
          
           CategoryName,
-          img:`http://localhost:5000/${img}`,
+          img:`https://ekdastar.onrender.com/${img}`,
         });
         
       

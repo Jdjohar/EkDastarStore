@@ -21,7 +21,7 @@ const OrderView = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/auth/orders/${id}`);
+        const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`);
         if (!response.ok) {
           throw new Error('Error fetching order details');
         }
@@ -50,7 +50,7 @@ const OrderView = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/orders/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const OrderView = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/orders/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

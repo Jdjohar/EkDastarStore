@@ -8,7 +8,7 @@ const CategoryList = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/categories');
+        const response = await fetch('https://ekdastar.onrender.com/api/auth/categories');
         const data = await response.json();
 
         setCategories(data.data);
@@ -23,7 +23,7 @@ const CategoryList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/auth/categories/${id}`, {
+        const response = await fetch(`https://ekdastar.onrender.com/api/auth/categories/${id}`, {
           method: 'DELETE',
         });
 

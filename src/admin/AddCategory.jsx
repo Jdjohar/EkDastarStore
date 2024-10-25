@@ -22,7 +22,7 @@ const AddCategory = () => {
     formData.append('img', categoryData.img);  // Append the image file
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/addcategory', {
+      const response = await fetch('https://ekdastar.onrender.com/api/auth/addcategory', {
         method: 'POST',
         body: formData,
       });
