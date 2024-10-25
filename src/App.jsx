@@ -35,7 +35,6 @@ import CategoryEdit from './admin/CategoryEdit.jsx';
 import ProductCatwise from './screens/ProductCatwise.jsx';
 import About from './screens/About.jsx';
 import Categories from './screens/Categories.jsx';
-import TestCheckOut from './screens/TestCheckOut.jsx';
 
 function App() {
   return (
@@ -52,7 +51,6 @@ function App() {
             <Route exact path="/forgotpassword" element={<ForgotPassword />} />
             <Route exact path="/stripe" element={<Stripe />} />
             <Route exact path="/checkoutpage" element={<CheckoutPage />} />
-            <Route exact path="/checkoutpage2" element={<TestCheckOut />} />
             <Route exact path="/testpayment" element={<Testpayment />} />
             <Route exact path="/cartpage" element={<CartPage />} />
             <Route exact path="/thankyou" element={<ThankYou />} />
