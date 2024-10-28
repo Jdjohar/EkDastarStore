@@ -62,7 +62,7 @@ const ViewProduct = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`https://ekdastar.onrender.comapi/auth/getproducts/${productId}`);
+                const response = await fetch(`https://ekdastar.onrender.com/api/auth/getproducts/${productId}`);
                 const data = await response.json();
                 if (response.status === 200) {
                     setProduct(data.data);

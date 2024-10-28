@@ -783,7 +783,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`https://ekdastar.onrender.com${img}`,
+//           img:`https://ekdastar.onrender.com/${img}`,
 //           options: JSON.parse(options)
 //         });
 

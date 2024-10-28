@@ -14,7 +14,7 @@ export default function MyOrder() {
         }
 
         try {
-            const response = await fetch('https://ekdastar.onrender.comapi/auth/userorders', {
+            const response = await fetch('https://ekdastar.onrender.com/api/auth/userorders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

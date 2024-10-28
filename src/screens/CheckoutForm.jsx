@@ -54,7 +54,7 @@ const CheckoutForm = () => {
             console.log("Step 1");
     
             // Step 1: Create a Stripe Customer
-            const customerResponse = await fetch('https://ekdastar.onrender.comapi/auth/create-customer', {
+            const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ const CheckoutForm = () => {
             console.log("Customer created:", customerId);
     
             // Step 2: Create a PaymentIntent with the customer ID
-            const response = await fetch('https://ekdastar.onrender.comapi/auth/payment', {
+            const response = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const CheckoutForm = () => {
             const userid = localStorage.getItem('userId');
             const useremail = localStorage.getItem('userEmail');
             if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const checkoutResponse = await fetch("https://ekdastar.onrender.comapi/auth/checkoutOrder", {
+                const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

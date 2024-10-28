@@ -12,7 +12,7 @@ const ProductList = () => {
     // Fetch products from the API
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://ekdastar.onrender.comapi/auth/product');
+        const response = await fetch('https://ekdastar.onrender.com/api/auth/product');
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -33,7 +33,7 @@ const ProductList = () => {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.comapi/auth/product/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.com/api/auth/product/${id}`, {
         method: 'DELETE',
       });
 
