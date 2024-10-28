@@ -13,7 +13,7 @@ const OrdersList = () => {
     const fetchOrders = async () => {
         console.log("Result");
       try {
-        const response = await fetch('https://ekdastar.onrender.com/api/auth/orders');
+        const response = await fetch('https://ekdastar.onrender.comapi/auth/orders');
         const result = await response.json();
         console.log(result,"Result");
         
@@ -39,7 +39,7 @@ const OrdersList = () => {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.comapi/auth/orders/${id}`, {
         method: 'DELETE',
       });
 

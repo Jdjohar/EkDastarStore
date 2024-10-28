@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Card from '../components/Card'; // Importing Card component to display products
 import { useParams } from 'react-router-dom';
 import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar2';
 
 const ProductCatwise = () => {
     const { categoryName } = useParams();
@@ -11,7 +11,7 @@ const ProductCatwise = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch(`https://ekdastar.onrender.com/api/auth/products/category/${categoryName}`);
+                const response = await fetch(`https://ekdastar.onrender.comapi/auth/products/category/${categoryName}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -29,7 +29,7 @@ const ProductCatwise = () => {
     }, [categoryName]); // Depend on categoryName so it refetches when it changes
 
     return (
-        <div className='py-5'>
+        <div className=''>
             <Navbar />
             <div className="container">
             <h1 className='py-5'>{categoryName}</h1>

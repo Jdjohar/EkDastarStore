@@ -63,8 +63,15 @@ export default function Navbar(props) {
                             </ul>
                             {!localStorage.getItem("token") ? (
                                 <div className="d-flex">
-                                    <Link className="btn btn-outline-success mx-1" to="/login">Login</Link>
-                                    <Link className="btn btn-outline-success mx-1" to="/signup">Signup</Link>
+                                    <Link className="btn btn-outline-light mx-1" to="/login">Login</Link>
+                                    <Link className="btn btn-outline-light mx-1" to="/signup">Signup</Link>
+                                    <button className="btn btn-outline-light mx-2 position-relative" onClick={loadCart}>
+                                        Cart
+                                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            {items.length}
+                                        </span>
+                                    </button>
+                                    {cartView && <Modal onClose={() => setCartView(false)}><Cart /></Modal>}
                                 </div>
                             ) : (
                                 <div className="d-flex align-items-center">

@@ -28,7 +28,7 @@ const CheckoutForm = () => {
     const calculateTotal = () => {
         let total = 0;
         cart.forEach((item) => {
-            total += item.price * item.qty;
+            total += item.price;
         });
         return total; // Keep the total in dollars
     };
@@ -54,7 +54,7 @@ const CheckoutForm = () => {
             console.log("Step 1");
     
             // Step 1: Create a Stripe Customer
-            const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
+            const customerResponse = await fetch('https://ekdastar.onrender.comapi/auth/create-customer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ const CheckoutForm = () => {
             console.log("Customer created:", customerId);
     
             // Step 2: Create a PaymentIntent with the customer ID
-            const response = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
+            const response = await fetch('https://ekdastar.onrender.comapi/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -143,14 +143,14 @@ const CheckoutForm = () => {
             const userid = localStorage.getItem('userId');
             const useremail = localStorage.getItem('userEmail');
             if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
+                const checkoutResponse = await fetch("https://ekdastar.onrender.comapi/auth/checkoutOrder", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         userId: userid,
-                        userEmail: useremail,
+                        userEmail: useremail || billingAddress.email,
                         orderItems: cart,
                         email: billingAddress.email,
                         orderDate: new Date().toDateString(),

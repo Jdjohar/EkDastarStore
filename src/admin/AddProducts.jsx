@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminNavbar from './components/AdminNavbar';
 import { useNavigate } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure Bootstrap is imported
 
 const AddProduct = () => {
   const [staticFormData, setStaticFormData] = useState({
@@ -18,7 +19,7 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('https://ekdastar.onrender.com/api/auth/categories');
+        const response = await fetch('https://ekdastar.onrender.comapi/auth/categories');
         if (response.ok) {
           const data = await response.json();
           setCategories(data.data);
@@ -58,7 +59,7 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const formData = new FormData();
     formData.append('name', staticFormData.name);
     formData.append('description', staticFormData.description);
@@ -75,18 +76,19 @@ const AddProduct = () => {
       }, {})
     );
     formData.append('options', opt);
-  
+
     try {
-      const response = await fetch('https://ekdastar.onrender.com/api/auth/addproducts', {
+      const response = await fetch('https://ekdastar.onrender.comapi/auth/addproducts', {
         method: 'POST',
         body: formData,
       });
-  
+
       if (response.ok) {
         const data = await response.json();
+        alert('Product Added!')
         console.log('Product added:', data);
         // Uncomment the line below to navigate after submission
-        // navigate('/admin/productlist');
+        navigate('/admin/productlist');
       } else {
         console.error('API Error:', response.statusText);
       }
@@ -98,96 +100,112 @@ const AddProduct = () => {
   return (
     <>
       <AdminNavbar />
-      <div className='container py-5'>
-        <div className='row py-5'>
-          <div className='col-md-6 offset-md-3'>
-            <form onSubmit={handleSubmit} encType='multipart/form-data'> {/* Handle submit with onSubmit */}
-              <div className='form-group mb-3'>
-                <label>Product Name</label>
-                <input
-                  type='text'
-                  className='form-control'
-                  name='name'
-                  value={staticFormData.name}
-                  onChange={(e) => handleStaticInputChange('name', e.target.value)}
-                />
+      <div className="container py-5">
+        <div className="row">
+          <div className="col-md-8 offset-md-2">
+            <div className="card">
+              <div className="card-header text-center">
+                <h2>Add New Product</h2>
               </div>
-              <div className='form-group mb-3'>
-                <label>Product Description</label>
-                <input
-                  type='text'
-                  name='description'
-                  className='form-control'
-                  value={staticFormData.description}
-                  onChange={(e) => handleStaticInputChange('description', e.target.value)}
-                />
-              </div>
-              <div className='form-group mb-3'>
-                {options.map((data, index) => (
-                  <div key={index}>
+              <div className="card-body">
+                <form onSubmit={handleSubmit} encType="multipart/form-data">
+                  <div className="form-group mb-3">
+                    <label>Product Name</label>
                     <input
-                      type='text'
-                      placeholder='Enter key'
-                      value={data.key}
-                      onChange={(e) => handleDynamicInputChange(index, 'key', e.target.value)}
+                      type="text"
+                      className="form-control"
+                      name="name"
+                      value={staticFormData.name}
+                      onChange={(e) => handleStaticInputChange('name', e.target.value)}
+                      required
                     />
-                    <input
-                      type='text'
-                      placeholder='Enter value'
-                      value={data.value}
-                      onChange={(e) => handleDynamicInputChange(index, 'value', e.target.value)}
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Product Description</label>
+                    <textarea
+                      className="form-control"
+                      name="description"
+                      value={staticFormData.description}
+                      onChange={(e) => handleStaticInputChange('description', e.target.value)}
+                      
                     />
-                    <button type='button' onClick={() => handleRemove(index)}>
-                      Remove
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Product Options</label>
+                    {options.map((data, index) => (
+                      <div key={index} className="d-flex mb-2">
+                        <input
+                          type="text"
+                          placeholder="Enter key"
+                          value={data.key}
+                          onChange={(e) => handleDynamicInputChange(index, 'key', e.target.value)}
+                          className="form-control me-2"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Enter value"
+                          value={data.value}
+                          onChange={(e) => handleDynamicInputChange(index, 'value', e.target.value)}
+                          className="form-control me-2"
+                          required
+                        />
+                        <button type="button" className="btn btn-danger" onClick={() => handleRemove(index)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-success" onClick={handleAddNew}>
+                      Add New Option
                     </button>
                   </div>
-                ))}
-                <button type='button' onClick={handleAddNew}>
-                  Add new
-                </button>
-              </div>
 
-              <div className='form-group mb-3'>
-                <label>Product Category</label>
-                <select
-                  name='CategoryName'
-                  className='form-control'
-                  value={staticFormData.CategoryName}
-                  onChange={(e) => handleStaticInputChange('CategoryName', e.target.value)}
-                >
-                  <option value=''>Select Category</option>
-                  {categories.map((category) => (
-                    <option key={category._id} value={category.CategoryName}>
-                      {category.CategoryName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className='form-group mb-3'>
-                <label>Product Image</label>
-                <input
-                  type='file'
-                  name='img'
-                  className='form-control'
-                  onChange={(e) => handleStaticInputChange('img', e)}
-                />
-              </div>
-              <div className='form-group mb-3'>
-                <label>Product Featured</label>
-                <select
-                  name='featured'
-                  className='form-control'
-                  value={staticFormData.featured}
-                  onChange={(e) => handleStaticInputChange('featured', e.target.value === 'true')}
-                >
-                  <option value=''>Select Option</option>
-                  <option value='true'>True</option>
-                  <option value='false'>False</option>
-                </select>
-              </div>
+                  <div className="form-group mb-3">
+                    <label>Product Category</label>
+                    <select
+                      name="CategoryName"
+                      className="form-control"
+                      value={staticFormData.CategoryName}
+                      onChange={(e) => handleStaticInputChange('CategoryName', e.target.value)}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((category) => (
+                        <option key={category._id} value={category.CategoryName}>
+                          {category.CategoryName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Product Image</label>
+                    <input
+                      type="file"
+                      name="img"
+                      className="form-control"
+                      onChange={(e) => handleStaticInputChange('img', e)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label>Product Featured</label>
+                    <select
+                      name="featured"
+                      className="form-control"
+                      value={staticFormData.featured}
+                      onChange={(e) => handleStaticInputChange('featured', e.target.value === 'true')}
+                      required
+                    >
+                      <option value="">Select Option</option>
+                      <option value="true">True</option>
+                      <option value="false">False</option>
+                    </select>
+                  </div>
 
-              <button type='submit'>Submit</button> {/* Changed type to submit */}
-            </form>
+                  <button type="submit" className="btn btn-primary w-100">Submit</button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ const OrderView = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`);
+        const response = await fetch(`https://ekdastar.onrender.comapi/auth/orders/${id}`);
         if (!response.ok) {
           throw new Error('Error fetching order details');
         }
@@ -50,7 +50,7 @@ const OrderView = () => {
     };
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.comapi/auth/orders/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const OrderView = () => {
     };
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.com/api/auth/orders/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.comapi/auth/orders/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -171,8 +171,8 @@ const OrderView = () => {
               <tr key={item._id}>
                 <td>{item.name}</td>
                 <td>{item.qty}</td>
-                <td>${item.price.toFixed(2)}</td>
-                <td>${(item.qty * item.price).toFixed(2)}</td>
+                <td>${(item.price)/(item.qty).toFixed(2)}</td>
+                <td>${(item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

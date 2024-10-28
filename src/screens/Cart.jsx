@@ -8,7 +8,7 @@ export default function Cart() {
   if (data.length === 0) {
     return (
       <div>
-        <div className='m-5 w-100 text-center fs-3'>The Cart is Empty!</div>
+        <div className='m-5 w-100 text-white text-center fs-3'>The Cart is Empty!</div>
       </div>
     )
   }
@@ -18,9 +18,11 @@ export default function Cart() {
   // }
 
   const handleCheckOut = async () => {
+    console.log("Hello Start");
+    
     let userEmail = localStorage.getItem("userEmail");
     // console.log(data,localStorage.getItem("userEmail"),new Date())
-    let response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
+    let response = await fetch("https://ekdastar.onrender.comapi/auth/orderData", {
       // credentials: 'include',
       // Origin:"http://localhost:3000/login",
       method: 'POST',
@@ -39,7 +41,7 @@ export default function Cart() {
     }
   }
 
-  let totalPrice = data.reduce((total, food) => total + (food.price * food.qty), 0)
+  let totalPrice = data.reduce((total, food) => total + (food.price), 0)
   return (
     <div>
 
@@ -65,14 +67,14 @@ export default function Cart() {
                 <td >{food.name}</td>
                 <td>{food.qty}</td>
                 <td>{food.size}</td>
-                <td>${food.price * food.qty}</td>
+                <td>${food.price}</td>
                 <td ><button type="button" className="btn p-0"><p className='text-danger' onClick={() => { dispatch({ type: "REMOVE", index: index }) }}> X </p></button> </td></tr>
             ))}
           </tbody>
         </table>
         <div><h1 className='fs-2 text-white'>Total Price: ${totalPrice}/-</h1></div>
         <div>
-          <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button>
+          {/* <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button> */}
           <Link className='btn bg-success mt-5 ' to={'/cartpage'} > Go to CheckOut Page </Link>
         </div>
       </div>

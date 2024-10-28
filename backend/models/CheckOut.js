@@ -29,7 +29,7 @@ const orderItemSchema = new Schema({
 
 // Define Main Checkout Schema
 const checkoutSchema = new Schema({
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to User model
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: false }, // Reference to User model
     userEmail: { type: String, required: true }, // Email of the user placing the order
     billingAddress: { type: addressSchema, required: true }, // Embedded address schema for billing
     shippingAddress: { type: addressSchema, required: true }, // Embedded address schema for shipping

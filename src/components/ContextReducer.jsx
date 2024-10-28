@@ -46,6 +46,8 @@ const loadCartFromStorage = () => {
 export const CartProvider = ({ children }) => {
     const [state, dispatch] = useReducer(reducer, [], loadCartFromStorage);
     useEffect(() => {
+        console.log(state,"State");
+        
         localStorage.setItem('cart', JSON.stringify(state));
       }, [state]);
     return (

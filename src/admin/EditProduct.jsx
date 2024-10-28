@@ -19,7 +19,7 @@ const EditProduct = () => {
   // Fetch categories for the dropdown (Optional, if categories need to be dynamic)
   const fetchCategories = async () => {
     try {
-      const response = await fetch('https://ekdastar.onrender.com/api/auth/categories');
+      const response = await fetch('https://ekdastar.onrender.comapi/auth/categories');
       const result = await response.json();
       console.log(result, "Cate");
       
@@ -33,7 +33,7 @@ const EditProduct = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`https://ekdastar.onrender.com/api/auth/product/${id}`);
+        const response = await fetch(`https://ekdastar.onrender.comapi/auth/product/${id}`);
         const result = await response.json();
         console.log(result, "Product");
 
@@ -125,7 +125,7 @@ const EditProduct = () => {
     formData.append('options', JSON.stringify([optionsObject])); // Wrap the object in an array
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.com/api/auth/product/${id}`, {
+      const response = await fetch(`https://ekdastar.onrender.comapi/auth/product/${id}`, {
         method: 'PUT',
         body: formData, // Send as multipart/form-data
       });

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import { useDispatchCart } from '../components/ContextReducer';
+import Navbar from '../components/Navbar2';
+import { useDispatchCart, useCart } from '../components/ContextReducer';
 
 const ViewProduct = () => {
     const { productId } = useParams();
     const [product, setProduct] = useState(null);
     const dispatch = useDispatchCart();
+    const cart = useCart();
     const [selectedQty, setSelectedQty] = useState(1);
     const [selectedSize, setSelectedSize] = useState("");
     const [price, setPrice] = useState(0);
 
+    // Handle size change and update price
     const handleSizeChange = (size) => {
         setSelectedSize(size);
         if (product && product.options && product.options.length > 0) {
@@ -19,8 +21,22 @@ const ViewProduct = () => {
         }
     };
 
+    // Add to cart or update quantity if item is already in cart
     const addToCart = () => {
-        if (product) {
+        const existingItem = cart.find(
+            (item) => item.id === product._id && item.size === selectedSize
+        );
+
+        if (existingItem) {
+            // Update quantity
+            dispatch({
+                type: "UPDATE",
+                id: product._id,
+                qty: selectedQty,
+                size: selectedSize,
+            });
+        } else {
+            // Add new item
             dispatch({
                 type: "ADD",
                 id: product._id,
@@ -33,14 +49,23 @@ const ViewProduct = () => {
         }
     };
 
+    // Remove item from cart
+    const removeFromCart = () => {
+        dispatch({
+            type: "REMOVE",
+            id: product._id,
+            size: selectedSize,
+        });
+    };
+
+    // Fetch product details
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`https://ekdastar.onrender.com/api/auth/getproducts/${productId}`);
+                const response = await fetch(`https://ekdastar.onrender.comapi/auth/getproducts/${productId}`);
                 const data = await response.json();
                 if (response.status === 200) {
                     setProduct(data.data);
-
                     if (data.data.options && data.data.options.length > 0) {
                         const firstSize = Object.keys(data.data.options[0])[0];
                         setSelectedSize(firstSize);
@@ -114,7 +139,8 @@ const ViewProduct = () => {
                                     />
                                 </div>
 
-                                <button className="btn btn-dark" onClick={addToCart}>Add to Cart</button>
+                                <button className="btn btn-dark me-2" onClick={addToCart}>Add to Cart</button>
+                                <button className="btn btn-danger" onClick={removeFromCart}>Remove from Cart</button>
                             </div>
                         </div>
                     </div>

@@ -17,7 +17,7 @@ export default function Home() {
   const [search, setSearch] = useState('')
 
   const loadFoodItems = async () => {
-    let response = await fetch("https://ekdastar.onrender.com/api/auth/foodData", {
+    let response = await fetch("https://ekdastar.onrender.comapi/auth/foodData", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -134,17 +134,21 @@ export default function Home() {
         </div>
       </section>
       {/* Category Section */}
-     
+
 
       <div class="container p-0">
         <div class="row text-center g-0">
-        <h2 className="display-4 pt-3 fs-4 pb-4 fw-bold text-uppercase text-center">Explore Our Categories</h2>
+          <h2 className="display-4 pt-3 fs-4 pb-4 fw-bold text-uppercase text-center">Explore Our Categories</h2>
           {foodCat.map((category) => (
             <div class="col-6 col-md-3" key={category._id}>
               <div class="gallery-item">
                 <img src={category.img} alt={category.CategoryName} />
                 <div class="overlay">
-                  <h3 className='text-uppercase'>{category.CategoryName}</h3>
+                  
+                    <Link className='text-uppercase text-decoration-none' to={`/products/${category.CategoryName}`}>
+                    <h3 className='text-uppercase'> {category.CategoryName} </h3>
+                    </Link>
+                 
                 </div>
               </div>
             </div>

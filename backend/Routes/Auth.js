@@ -35,24 +35,32 @@ const upload = multer({ storage: storage });
 // var foodItems= require('../index').foodData;
 // require("../index")
 //Creating a user and storing data to MongoDB Atlas, No Login Requiered
+// Nodemailer transporter setup
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: "jdwebservices1@gmail.com",
+      pass: "cwoxnbrrxvsjfbmr"
+  },
+});
+
 router.post('/createuser', [
   body('email').isEmail(),
   body('password').isLength({ min: 5 }),
   body('name').isLength({ min: 3 })
 ], async (req, res) => {
-  let success = false
+  let success = false;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ success, errors: errors.array() })
+    return res.status(400).json({ success, errors: errors.array() });
   }
-  // console.log(req.body)
-  // let user = await User.findOne({email:req.body.email})
-  const salt = await bcrypt.genSalt(10)
+
+  const salt = await bcrypt.genSalt(10);
   let securePass = await bcrypt.hash(req.body.password, salt);
+
   try {
     await User.create({
       name: req.body.name,
-      // password: req.body.password,  first write this and then use bcryptjs
       password: securePass,
       email: req.body.email,
       location: req.body.location
@@ -61,20 +69,64 @@ router.post('/createuser', [
         user: {
           id: user.id
         }
-      }
+      };
       const authToken = jwt.sign(data, jwtSecret);
-      success = true
-      res.json({ success, authToken })
-    })
-      .catch(err => {
-        console.log(err);
-        res.json({ error: "Please enter a unique value." })
-      })
-  } catch (error) {
-    console.error(error.message)
-  }
-})
+      success = true;
 
+      // Send welcome email
+      const mailOptions = {
+        from: 'youremail@gmail.com', // Sender email
+        to: req.body.email, // Recipient email
+        subject: 'Welcome to Our Service!',
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h1 style="color: #4CAF50;">Welcome to Ek Dastar, ${req.body.name}!</h1>
+          <p>Thank you for joining <strong>Ek Dastar</strong>, where tradition meets elegance. We're honored to be part of your journey in finding authentic turbans, patkas, and dumala sahibs.</p>
+      
+          <p>As a valued member of Ek Dastar, you now have access to:</p>
+          <ul>
+            <li>Exclusive offers on premium turbans and accessories</li>
+            <li>Personalized recommendations based on your unique style</li>
+            <li>Guidance from our experts to help you choose the perfect fit and style</li>
+          </ul>
+      
+          <p>We believe every turban and patka is a symbol of pride and identity, and we’re dedicated to providing high-quality materials and craftsmanship that honor this tradition.</p>
+          
+          <p>To get started, log in and explore our latest collections. We’re here to help you find the perfect piece that resonates with your style and heritage.</p>
+          
+          <p>If you have any questions or need assistance, feel free to reach out to us at <a href="mailto:support@ekDastar.com" style="color: #4CAF50;">support@ekDastar.com</a>. Our team is here to ensure your shopping experience is as seamless as possible.</p>
+      
+          <p>Welcome once again to the Ek Dastar family. We look forward to being a part of your journey.</p>
+      
+          <p>With respect and best wishes,<br>The Ek Dastar Team</p>
+      
+          <hr style="border: none; border-top: 1px solid #ccc;">
+          <p style="font-size: 12px; color: #666;">You're receiving this email because you registered with Ek Dastar. If you didn’t sign up, please ignore this email or <a href="mailto:support@ekDastar.com" style="color: #666;">contact us</a>.</p>
+        </div>
+      `
+      
+      
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
+      res.json({ success, authToken });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({ error: "Please enter a unique value." });
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
+  }
+});
 
 
 //Get a Product
@@ -256,8 +308,21 @@ router.post('/orderData', async (req, res) => {
 
 router.post('/checkoutOrder', async (req, res) => {
   try {
-    const { billingAddress, userId, userEmail, shippingAddress, orderItems, totalAmount, shippingMethod, shippingCost, paymentMethod, paymentStatus } = req.body;
-    // const userId = req.user.id;  // Assuming req.user is set by the auth middleware
+    const {
+      billingAddress,
+      userId,
+      userEmail,
+      shippingAddress,
+      orderItems,
+      totalAmount,
+      shippingMethod,
+      shippingCost,
+      paymentMethod,
+      paymentStatus
+    } = req.body;
+
+    console.log(billingAddress,"billingAddress");
+    
 
     // Validate request
     if (!billingAddress || !shippingAddress || !orderItems || !totalAmount || !shippingMethod || !paymentMethod) {
@@ -267,21 +332,73 @@ router.post('/checkoutOrder', async (req, res) => {
     // Create a new order
     const newOrder = new Checkout({
       userId,
-      userEmail, // Assuming req.user has email
+      userEmail,
       billingAddress,
       shippingAddress,
       orderItems,
       totalAmount,
-      paymentStatus, // Default as pending, will be updated after payment
+      paymentStatus,
       shippingMethod,
       shippingCost,
       paymentMethod
     });
 
-    console.log(userId, "userId========");
-    
     // Save the order to the database
     const order = await newOrder.save();
+
+    // Email to Customer: Order Confirmation
+    const customerMailOptions = {
+      from: 'jdwebserviecs1@gmail.com',
+      to: billingAddress.email, // Customer's email
+      subject: 'Your Order with Ek Dastak has been Placed Successfully!',
+      html: `
+        <h2>Thank you for your order, ${billingAddress.firstName}!</h2>
+        <p>Your order has been placed successfully and is now being processed.</p>
+        <h3>Order Details:</h3>
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
+        <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
+        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+        <p>We will notify you once your order is shipped. Thank you for shopping with Ek Dastak!</p>
+      `
+    };
+
+    // Email to Owner: New Order Notification
+    const ownerMailOptions = {
+      from: 'jdwebserviecs1@gmail.com',
+      to: 'jdeep514@gmail.com', // Owner's email address
+      subject: 'New Order Placed on Ek Dastak',
+      html: `
+        <h2>New Order Alert!</h2>
+        <p>A new order has been placed on Ek Dastak.</p>
+        <h3>Order Details:</h3>
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>Customer Name:</strong> ${billingAddress.firstName}</p>
+        <p><strong>Customer Email:</strong> ${billingAddress.email}</p>
+        <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
+        <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
+        <p><strong>Payment Status:</strong> ${paymentStatus}</p>
+        <p>Please review the order in the admin panel for further details.</p>
+      `
+    };
+
+    // Send customer email
+    transporter.sendMail(customerMailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email to customer:', error);
+      } else {
+        console.log('Customer email sent:', info.response);
+      }
+    });
+
+    // Send owner email
+    transporter.sendMail(ownerMailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email to owner:', error);
+      } else {
+        console.log('Owner email sent:', info.response);
+      }
+    });
 
     res.status(200).json(order);
   } catch (error) {
@@ -320,7 +437,7 @@ router.get('/orders/:id', async (req, res) => {
 // Update order (e.g., payment status)
 router.put('/orders/:id', async (req, res) => {
   try {
-    const { orderStatus, shippingMethod, shippingCost, paymentMethod, estimatedDelivery,trackingNumber } = req.body;
+    const { orderStatus, shippingMethod, shippingCost, paymentMethod, estimatedDelivery, trackingNumber } = req.body;
 
     // Find the order by ID
     const order = await Checkout.findById(req.params.id);
@@ -339,13 +456,40 @@ router.put('/orders/:id', async (req, res) => {
     // Save the updated order
     const updatedOrder = await order.save();
 
+    // Check if orderStatus has been updated and send email notification
+    if (orderStatus) {
+      const customerMailOptions = {
+        from: 'jdwebservices1@gmail.com',
+        to: order.billingAddress.email, // Customer's email from the order
+        subject: `Order #${order._id} Status Update: ${orderStatus}`,
+        html: `
+          <h2>Hello ${order.billingAddress.firstName},</h2>
+          <p>We wanted to let you know that the status of your order has been updated.</p>
+          <h3>Updated Order Details:</h3>
+          <p><strong>Order ID:</strong> ${order._id}</p>
+          <p><strong>Status:</strong> ${orderStatus}</p>
+          ${estimatedDelivery ? `<p><strong>Estimated Delivery:</strong> ${estimatedDelivery}</p>` : ''}
+          ${trackingNumber ? `<p><strong>Tracking Number:</strong> ${trackingNumber}</p>` : ''}
+          <p>Thank you for shopping with Ek Dastak!</p>
+        `
+      };
+
+      // Send the email to the customer
+      transporter.sendMail(customerMailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email to customer:', error);
+        } else {
+          console.log('Order status update email sent:', info.response);
+        }
+      });
+    }
+
     res.status(200).json(updatedOrder);
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: 'Server Error' });
   }
 });
-
 // Delete an order by ID
 router.delete('/orders/:id', async (req, res) => {
   try {
@@ -639,7 +783,7 @@ router.get('/products/:productId', async (req, res) => {
 //           name,
 //           description,
 //           CategoryName,
-//           img:`https://ekdastar.onrender.com/${img}`,
+//           img:`https://ekdastar.onrender.com${img}`,
 //           options: JSON.parse(options)
 //         });
 
@@ -761,7 +905,10 @@ router.put('/product/:id', upload.single('img'), async (req, res) => {
 
 router.delete('/product/:id', async (req, res) => {
   try {
-    const product = await Products.findById(req.params.id);
+    const productId = req.params.id;
+
+    // Find the product in the database
+    const product = await Products.findById(productId);
 
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -771,8 +918,13 @@ router.delete('/product/:id', async (req, res) => {
     const imagePublicId = product.img.split('/').pop().split('.')[0]; // Extract the public ID from the image URL
     await cloudinary.uploader.destroy(imagePublicId); // Delete image from Cloudinary
 
-    await product.remove(); // Remove product from the database
+    // Remove product from the database
+    await product.remove();
 
+    // Remove product from global.foodData
+    global.foodData = global.foodData.filter(item => item.id !== productId); // Adjust this line as necessary based on your foodData structure
+
+    // Send success response
     res.status(200).json({
       status: 'success',
       message: 'Product deleted successfully',
@@ -782,6 +934,7 @@ router.delete('/product/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/product/search', async (req, res) => {
   try {

@@ -6,6 +6,9 @@ const AddCategory = () => {
     categoryName: '',
     img: null,  // For image file upload
   });
+  
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (fieldName, value) => {
     setCategoryData({
@@ -17,12 +20,15 @@ const AddCategory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Set loading state to true
+    setIsLoading(true);
+
     const formData = new FormData();
     formData.append('CategoryName', categoryData.categoryName);
     formData.append('img', categoryData.img);  // Append the image file
 
     try {
-      const response = await fetch('https://ekdastar.onrender.com/api/auth/addcategory', {
+      const response = await fetch('https://ekdastar.onrender.comapi/auth/addcategory', {
         method: 'POST',
         body: formData,
       });
@@ -35,6 +41,9 @@ const AddCategory = () => {
       }
     } catch (error) {
       console.error('Error adding category:', error.message);
+    } finally {
+      // Set loading state to false after submission is complete
+      setIsLoading(false);
     }
   };
 
@@ -68,8 +77,8 @@ const AddCategory = () => {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary">
-                Add Category
+              <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                {isLoading ? 'Adding...' : 'Add Category'}
               </button>
             </form>
           </div>

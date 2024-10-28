@@ -10,7 +10,7 @@ export default function ForgotPassword() {
         e.preventDefault();
       
         try {
-          const response = await fetch('https://ekdastar.onrender.com/api/auth/forgot-password', {
+          const response = await fetch('https://ekdastar.onrender.comapi/auth/forgot-password', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

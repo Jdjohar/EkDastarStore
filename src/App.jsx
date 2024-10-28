@@ -68,7 +68,7 @@ function App() {
 
             <Route exact path="/admin/orderList" element={<OrdersList />} />
             <Route exact path="/admin/orderView/:id" element={<OrderView />} />
-            <Route exact path="/admin/products/:categoryName" element={<ProductCatwise />} />
+            <Route exact path="/products/:categoryName" element={<ProductCatwise />} />
             
           </Routes>
         </div>

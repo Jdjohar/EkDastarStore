@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar2'
 import Footer from '../components/Footer'
 import Aboutimg from '../../public/about.png'
+import { Link } from 'react-router-dom'
 
 const Categories = () => {
     const [foodCat, setFoodCat] = useState([])
     const loadFoodItems = async () => {
-        let response = await fetch("https://ekdastar.onrender.com/api/auth/foodData", {
+        let response = await fetch("https://ekdastar.onrender.comapi/auth/foodData", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -40,7 +41,9 @@ const Categories = () => {
                                 <div class="gallery-item m-2">
                                     <img src={category.img} alt={category.CategoryName} />
                                     <div class="overlay">
-                                        <h3 className='text-uppercase'>{category.CategoryName}</h3>
+                                        <Link className='text-uppercase text-decoration-none' to={`/products/${category.CategoryName}`}>
+                                            <h3 className='text-uppercase'> {category.CategoryName} </h3>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>

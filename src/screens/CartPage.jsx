@@ -26,7 +26,7 @@ const CartPage = () => {
         console.log(cart, "cart");
 
         cart.forEach((item) => {
-            total += ((item.price)) * item.qty;
+            total += (item.price);
         });
         return total; // Keep the total in dollars
     };
@@ -40,7 +40,7 @@ const CartPage = () => {
         }
 
         try {
-            const { error: backendError, clientSecret } = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
+            const { error: backendError, clientSecret } = await fetch('https://ekdastar.onrender.comapi/auth/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const CartPage = () => {
 
                 let userEmail = localStorage.getItem("userEmail");
                 // console.log(data,localStorage.getItem("userEmail"),new Date())
-                let response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
+                let response = await fetch("https://ekdastar.onrender.comapi/auth/orderData", {
                     // credentials: 'include',
                     // Origin:"http://localhost:3000/login",
                     method: 'POST',
@@ -137,12 +137,12 @@ const CartPage = () => {
                                                     </div>
                                                     <div class="ms-3">
                                                         <h5>{item.name}</h5>
-                                                        <p class="small mb-0">{item.size}meter</p>
+                                                        <p class="small mb-0">{item.size} meter</p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>{item.qty}</td>
-                                            <td>${((item.price) * (item.qty)).toFixed(2)}</td>
+                                            <td>${(item.price).toFixed(2)}</td>
                                             <td><img src={item.img} alt={item.name} style={{ width: '50px' }} /></td>
                                         </tr>
                                     ))}
