@@ -1,86 +1,172 @@
-import React from 'react'
-// import Delete from '@material-ui/icons/Delete'
+
+import React from 'react';
 import { useCart, useDispatchCart } from '../components/ContextReducer';
 import { Link } from 'react-router-dom';
+
 export default function Cart() {
-  let data = useCart();
-  let dispatch = useDispatchCart();
+  const data = useCart();
+  const dispatch = useDispatchCart();
+
   if (data.length === 0) {
     return (
-      <div>
-        <div className='m-5 w-100 text-white text-center fs-3'>The Cart is Empty!</div>
+      <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+        <div className="text-center">
+          <h3 className="text-muted mb-3">Your Cart is Empty</h3>
+          <Link to="/" className="btn btn-outline-primary">Continue Shopping</Link>
+        </div>
       </div>
-    )
+    );
   }
-  // const handleRemove = (index)=>{
-  //   console.log(index)
-  //   dispatch({type:"REMOVE",index:index})
-  // }
 
   const handleCheckOut = async () => {
-    console.log("Hello Start");
-    
-    let userEmail = localStorage.getItem("userEmail");
-    // console.log(data,localStorage.getItem("userEmail"),new Date())
-    let response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
-      // credentials: 'include',
-      // Origin:"http://localhost:3000/login",
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        order_data: data,
-        email: userEmail,
-        order_date: new Date().toDateString()
-      })
-    });
-    console.log("JSON RESPONSE:::::", response.status)
-    if (response.status === 200) {
-      dispatch({ type: "DROP" })
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_data: data,
+          email: userEmail,
+          order_date: new Date().toDateString()
+        })
+      });
+
+      if (response.status === 200) {
+        dispatch({ type: "DROP" });
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
     }
-  }
+  };
 
-  let totalPrice = data.reduce((total, food) => total + (food.price), 0)
+  const totalPrice = data.reduce((total, food) => total + food.price, 0);
+
   return (
-    <div>
+    <div className="container-fluid py-5">
+      <div className="row g-4">
+        {/* Main Content */}
+        <div className="col-lg-8">
+          <div className="card shadow-sm border-0">
+            <div className="card-header bg-white py-3">
+              <h4 className="mb-0 fw-bold">Shopping Cart ({data.length} items)</h4>
+            </div>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table table-hover m-0">
+                  <thead className="bg-light">
+                    <tr>
+                      <th scope="col" className="py-3">#</th>
+                      <th scope="col" className="py-3">Product</th>
+                      <th scope="col" className="py-3">Quantity</th>
+                      <th scope="col" className="py-3">Options</th>
+                      <th scope="col" className="py-3">Price</th>
+                      <th scope="col" className="py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((food, index) => (
+                      <tr key={index} className="align-middle">
+                        <td className="fw-medium">{index + 1}</td>
+                        <td>{food.name}</td>
+                        <td>{food.qty}</td>
+                        <td>{food.size}</td>
+                        <td className="fw-medium">${food.price.toFixed(2)}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => dispatch({ type: "REMOVE", index })}
+                          >
+                            X
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {console.log("Data Working!",data)}
-      <div className='container m-auto mt-5 table-responsive  table-responsive-sm table-responsive-md' >
-        <table className='table '>
-          <thead className=' text-success fs-4'>
-            <tr>
-              <th scope='col' >#</th>
-              <th scope='col' >Name</th>
-              <th scope='col' >Quantity</th>
-              <th scope='col' >Option</th>
-              <th scope='col' >Amount</th>
-              <th scope='col' ></th>
-            </tr>
-          </thead>
-          <tbody>
-            {console.log(data,"data")
-            }
-            {data.map((food, index) => (
-              <tr className='text-white'>
-                <th scope='row' >{index + 1}</th>
-                <td >{food.name}</td>
-                <td>{food.qty}</td>
-                <td>{food.size}</td>
-                <td>${food.price}</td>
-                <td ><button type="button" className="btn p-0"><p className='text-danger' onClick={() => { dispatch({ type: "REMOVE", index: index }) }}> X </p></button> </td></tr>
-            ))}
-          </tbody>
-        </table>
-        <div><h1 className='fs-2 text-white'>Total Price: ${totalPrice}/-</h1></div>
-        <div>
-          {/* <button className='btn bg-success mt-5 me-2' onClick={handleCheckOut} > Check Out </button> */}
-          <Link className='btn bg-success mt-5 ' to={'/cartpage'} > Go to CheckOut Page </Link>
+        {/* Right Sidebar */}
+        <div className="col-lg-4">
+          <div className="card shadow-sm border-0 sticky-top" style={{ top: '20px' }}>
+            <div className="card-header bg-white py-3">
+              <h5 className="mb-0 fw-bold">Order Summary</h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex justify-content-between mb-3">
+                <span className="text-muted">Subtotal ({data.length} items)</span>
+                <span className="fw-medium">${totalPrice.toFixed(2)}</span>
+              </div>
+              <div className="d-flex justify-content-between mb-3">
+                <span className="text-muted">Shipping</span>
+                <span className="fw-medium">Free</span>
+              </div>
+              <hr />
+              <div className="d-flex justify-content-between mb-4">
+                <span className="fw-bold">Total</span>
+                <span className="fw-bold text-success">${totalPrice.toFixed(2)}</span>
+              </div>
+              <Link
+                to="/cartpage"
+                className="btn btn-primary w-100 py-2"
+                
+              >
+                View Cart
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Custom CSS */}
+      <style jsx>{`
+        .card {
+          border-radius: 10px;
+          overflow: hidden;
+        }
 
+        .table th,
+        .table td {
+          border-color: #e9ecef;
+          vertical-align: middle;
+        }
 
+        .btn-primary {
+ hogy           background-color: #007bff;
+          border-color: #007bff;
+          transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+          background-color: #0056b3;
+          border-color: #0056b3;
+          transform: translateY(-2px);
+        }
+
+        .btn-outline-danger {
+          transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+          background-color: #dc3545;
+          color: white;
+          transform: scale(1.1);
+        }
+
+        @media (max-width: 991px) {
+          .sticky-top {
+            position: static;
+          }
+          
+          .card-body {
+            padding: 1rem;
+          }
+        }
+      `}</style>
     </div>
-  )
+  );
 }

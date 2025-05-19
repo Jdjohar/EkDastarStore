@@ -4,7 +4,6 @@ const Order = require('../models/Orders')
 const Products = require('../models/Product')
 const Category = require('../models/Category')
 const Checkout = require('../models/CheckOut')
-require('dotenv').config();
 const router = express.Router()
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs')
@@ -15,7 +14,8 @@ const jwtSecret = "HaHa"
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// const stripe = new Stripe('sk_test_2rB0Mi5MPMyUYAnUv8on1Oef00ZIaFF3Tr');
+const stripe = require('stripe')('sk_test_2rB0Mi5MPMyUYAnUv8on1Oef00ZIaFF3Tr');
 const cloudinary = require('../cloudinaryConfig');
 
 // Create a Multer storage configuration for handling file uploads
@@ -40,7 +40,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
       user: "jdwebservices1@gmail.com",
-      pass: "oznjagccfrqngoah"
+      pass: "cwoxnbrrxvsjfbmr"
   },
 });
 
@@ -63,7 +63,7 @@ router.post('/createuser', [
       name: req.body.name,
       password: securePass,
       email: req.body.email,
-      // location: req.body.location
+      location: req.body.location
     }).then(user => {
       const data = {
         user: {
@@ -75,9 +75,9 @@ router.post('/createuser', [
 
       // Send welcome email
       const mailOptions = {
-        from: 'jdwebservices1@gmail.com', // Sender email
+        from: 'youremail@gmail.com', // Sender email
         to: req.body.email, // Recipient email
-        subject: 'Welcome to Our Store!',
+        subject: 'Welcome to Our Service!',
         html: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <h1 style="color: #4CAF50;">Welcome to Ek Dastar, ${req.body.name}!</h1>
@@ -169,48 +169,7 @@ router.post('/products', async (req, res) => {
   }
 
 })
-// Search products by name
-router.get('/products/search', async (req, res) => {
-  try {
-    const { name } = req.query;
 
-    // Validate query parameter
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'Name query parameter is required and must be a non-empty string' 
-      });
-    }
-
-    // Perform case-insensitive search using regex
-    const products = await Products.find({
-      name: { $regex: name.trim(), $options: 'i' }
-    }).select('name description CategoryName img featured inventory');
-
-    // Check if any products were found
-    if (products.length === 0) {
-      return res.status(404).json({ 
-        status: 'success', 
-        message: 'No products found matching the search criteria', 
-        data: [] 
-      });
-    }
-
-    // Return found products
-    res.status(200).json({
-      status: 'success',
-      count: products.length,
-      data: products
-    });
-
-  } catch (error) {
-    console.error('Error in product search:', error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Internal Server Error' 
-    });
-  }
-});
 
 
 
@@ -347,106 +306,106 @@ router.post('/orderData', async (req, res) => {
   }
 })
 
-  router.post('/checkoutOrder', async (req, res) => {
-    try {
-      const {
-        billingAddress,
-        userId,
-        userEmail,
-        shippingAddress,
-        orderItems,
-        totalAmount,
-        shippingMethod,
-        shippingCost,
-        paymentMethod,
-        paymentStatus
-      } = req.body;
+router.post('/checkoutOrder', async (req, res) => {
+  try {
+    const {
+      billingAddress,
+      userId,
+      userEmail,
+      shippingAddress,
+      orderItems,
+      totalAmount,
+      shippingMethod,
+      shippingCost,
+      paymentMethod,
+      paymentStatus
+    } = req.body;
 
-      console.log(billingAddress,"billingAddress");
-      
+    console.log(billingAddress,"billingAddress");
+    
 
-      // Validate request
-      if (!billingAddress || !shippingAddress || !orderItems || !totalAmount || !shippingMethod || !paymentMethod) {
-        return res.status(400).json({ msg: 'All required fields must be filled' });
-      }
-
-      // Create a new order
-      const newOrder = new Checkout({
-        userId,
-        userEmail,
-        billingAddress,
-        shippingAddress,
-        orderItems,
-        totalAmount,
-        paymentStatus,
-        shippingMethod,
-        shippingCost,
-        paymentMethod
-      });
-
-      // Save the order to the database
-      const order = await newOrder.save();
-
-      // Email to Customer: Order Confirmation
-      const customerMailOptions = {
-        from: 'jdwebserviecs1@gmail.com',
-        to: billingAddress.email, // Customer's email
-        subject: 'Your Order with Ek Dastak has been Placed Successfully!',
-        html: `
-          <h2>Thank you for your order, ${billingAddress.firstName}!</h2>
-          <p>Your order has been placed successfully and is now being processed.</p>
-          <h3>Order Details:</h3>
-          <p><strong>Order ID:</strong> ${order._id}</p>
-          <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
-          <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
-          <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-          <p>We will notify you once your order is shipped. Thank you for shopping with Ek Dastak!</p>
-        `
-      };
-
-      // Email to Owner: New Order Notification
-      const ownerMailOptions = {
-        from: 'jdwebserviecs1@gmail.com',
-        to: 'jdeep514@gmail.com', // Owner's email address
-        subject: 'New Order Placed on Ek Dastak',
-        html: `
-          <h2>New Order Alert!</h2>
-          <p>A new order has been placed on Ek Dastak.</p>
-          <h3>Order Details:</h3>
-          <p><strong>Order ID:</strong> ${order._id}</p>
-          <p><strong>Customer Name:</strong> ${billingAddress.firstName}</p>
-          <p><strong>Customer Email:</strong> ${billingAddress.email}</p>
-          <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
-          <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
-          <p><strong>Payment Status:</strong> ${paymentStatus}</p>
-          <p>Please review the order in the admin panel for further details.</p>
-        `
-      };
-
-      // Send customer email
-      transporter.sendMail(customerMailOptions, (error, info) => {
-        if (error) {
-          console.error('Error sending email to customer:', error);
-        } else {
-          console.log('Customer email sent:', info.response);
-        }
-      });
-
-      // Send owner email
-      transporter.sendMail(ownerMailOptions, (error, info) => {
-        if (error) {
-          console.error('Error sending email to owner:', error);
-        } else {
-          console.log('Owner email sent:', info.response);
-        }
-      });
-
-      res.status(200).json(order);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ msg: 'Server Error' });
+    // Validate request
+    if (!billingAddress || !shippingAddress || !orderItems || !totalAmount || !shippingMethod || !paymentMethod) {
+      return res.status(400).json({ msg: 'All required fields must be filled' });
     }
-  });
+
+    // Create a new order
+    const newOrder = new Checkout({
+      userId,
+      userEmail,
+      billingAddress,
+      shippingAddress,
+      orderItems,
+      totalAmount,
+      paymentStatus,
+      shippingMethod,
+      shippingCost,
+      paymentMethod
+    });
+
+    // Save the order to the database
+    const order = await newOrder.save();
+
+    // Email to Customer: Order Confirmation
+    const customerMailOptions = {
+      from: 'jdwebserviecs1@gmail.com',
+      to: billingAddress.email, // Customer's email
+      subject: 'Your Order with Ek Dastak has been Placed Successfully!',
+      html: `
+        <h2>Thank you for your order, ${billingAddress.firstName}!</h2>
+        <p>Your order has been placed successfully and is now being processed.</p>
+        <h3>Order Details:</h3>
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
+        <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
+        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+        <p>We will notify you once your order is shipped. Thank you for shopping with Ek Dastak!</p>
+      `
+    };
+
+    // Email to Owner: New Order Notification
+    const ownerMailOptions = {
+      from: 'jdwebserviecs1@gmail.com',
+      to: 'jdeep514@gmail.com', // Owner's email address
+      subject: 'New Order Placed on Ek Dastak',
+      html: `
+        <h2>New Order Alert!</h2>
+        <p>A new order has been placed on Ek Dastak.</p>
+        <h3>Order Details:</h3>
+        <p><strong>Order ID:</strong> ${order._id}</p>
+        <p><strong>Customer Name:</strong> ${billingAddress.firstName}</p>
+        <p><strong>Customer Email:</strong> ${billingAddress.email}</p>
+        <p><strong>Total Amount:</strong> $${(totalAmount / 100).toFixed(2)}</p>
+        <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
+        <p><strong>Payment Status:</strong> ${paymentStatus}</p>
+        <p>Please review the order in the admin panel for further details.</p>
+      `
+    };
+
+    // Send customer email
+    transporter.sendMail(customerMailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email to customer:', error);
+      } else {
+        console.log('Customer email sent:', info.response);
+      }
+    });
+
+    // Send owner email
+    transporter.sendMail(ownerMailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email to owner:', error);
+      } else {
+        console.log('Owner email sent:', info.response);
+      }
+    });
+
+    res.status(200).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
 
 // Get all orders
 router.get('/orders', async (req, res) => {
@@ -601,6 +560,9 @@ router.get('/orders/status/:status', async (req, res) => {
   }
 });
 
+// @route    POST /api/checkout/payment
+// @desc     Process payment using Stripe
+// @access   Private
 router.post('/payment', async (req, res) => {
   const { amount, description, userEmail, billingAddress, shippingAddress, customerId, paymentMethodId, orderId } = req.body;
   console.log('Received billingAddress:', billingAddress);
@@ -757,6 +719,49 @@ router.post('/create-intent', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+
+//   console.log("start here");
+  
+//   const sig = req.headers['stripe-signature'];
+//   let event;
+
+//   try {
+//     // Construct and verify the event using the Stripe signature and raw body
+//     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+//     console.log("Stripe event received:", event);
+    
+//   } catch (err) {
+//     console.error(`Webhook signature verification failed: ${err.message}`);
+//     return res.status(400).send(`Webhook Error: ${err.message}`);
+//   }
+
+//   // Handle the event by event type
+//   switch (event.type) {
+//     case 'payment_intent.succeeded':
+//       const paymentIntentSucceeded = event.data.object;
+//       console.log('PaymentIntent was successful!', paymentIntentSucceeded);
+//       // Handle the successful payment here, such as updating order status
+//       break;
+
+//     case 'payment_intent.payment_failed':
+//       const paymentIntentFailed = event.data.object;
+//       console.log('PaymentIntent failed!', paymentIntentFailed);
+//       // Handle the failed payment here
+//       break;
+
+//     default:
+//       console.log(`Unhandled event type ${event.type}`);
+//   }
+
+//   // Send back a response to Stripe to acknowledge receipt of the event
+//   res.status(200).json({ received: true });
+// });
+
+// @route    PUT /api/checkout/:id/paymentStatus
+// @desc     Update payment status after successful payment
+// @access   Private
 router.put('/:id/paymentStatus', async (req, res) => {
   const { paymentStatus } = req.body;
   try {
@@ -812,28 +817,64 @@ router.get('/products/:productId', async (req, res) => {
   }
 });
 
+
+// Define a route to handle product creation
+// router.post('/addproducts', upload.single('img'), async (req, res) => {
+
+//     try {
+//       // Extract product data from the request body
+//       const { name, description, CategoryName, options } = req.body;
+//       const img = req.file.filename;
+//       //   const optionss = JSON.parse(options);
+//       console.log(img);
+//       // Create a new product instance
+//       const newProduct = new Products({
+//           name,
+//           description,
+//           CategoryName,
+//           img:`https://ekdastar.onrender.com/${img}`,
+//           options: JSON.parse(options)
+//         });
+
+//         console.log(newProduct.options);
+//         console.log(newProduct.CategoryName);
+
+
+//       // Save the product to the database
+//       const savedProduct = await newProduct.save();
+//         res.status(201).json({
+//             status: 'success',
+//             data: savedProduct
+//           });
+//     } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   });
+
 // Define a route to handle product creation with Cloudinary image upload
 router.post('/addproducts', upload.single('img'), async (req, res) => {
   try {
-    const { name, description, CategoryName, options, featured, quantity } = req.body;
+    // Extract product data from the request body
+    const { name, description, CategoryName, options, featured } = req.body;
     const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
-      upload_preset: 'employeeApp',
+      upload_preset: 'employeeApp', // Use the preset from Cloudinary
     });
 
+    // Create a new product instance with the Cloudinary URL
     const newProduct = new Products({
       name,
       description,
       CategoryName,
-      img: uploadedImg.secure_url,
+      img: uploadedImg.secure_url, // Cloudinary image URL
       options: JSON.parse(options),
-      featured,
-      inventory: {
-        quantity: quantity || 0, // Default to 0 if not provided
-      },
+      featured
     });
-
+    // Save the product to the database
     const savedProduct = await newProduct.save();
-    global.foodData.push(savedProduct); // Update global foodData if still needed
+
+    // Update global food data
+    global.foodData.push(savedProduct); // Add the new product to the global variable
     res.status(201).json({
       status: 'success',
       data: savedProduct,
@@ -846,14 +887,7 @@ router.post('/addproducts', upload.single('img'), async (req, res) => {
 
 router.get('/product', async (req, res) => {
   try {
-    const { lowStock } = req.query; // Optional query param to filter low stock
-    let query = {};
-
-    if (lowStock === 'true') {
-      query['inventory.quantity'] = { $lte: Products.schema.path('inventory.lowStockThreshold').defaultValue };
-    }
-
-    const products = await Products.find(query);
+    const products = await Products.find(); // Fetch all products from the database
     res.status(200).json({
       status: 'success',
       data: products,
@@ -882,18 +916,15 @@ router.get('/product/:id', async (req, res) => {
 
 router.put('/product/:id', upload.single('img'), async (req, res) => {
   try {
-    const { name, description, CategoryName, options, quantity } = req.body;
+    const { name, description, CategoryName, options } = req.body;
     let updatedProduct = {
       name,
       description,
       CategoryName,
-      options: JSON.parse(options),
+      options: JSON.parse(options), // Assuming options is sent as a JSON string
     };
 
-    if (quantity !== undefined) {
-      updatedProduct['inventory.quantity'] = quantity; // Update inventory quantity
-    }
-
+    // If a new image is uploaded, upload to Cloudinary and update the image URL
     if (req.file) {
       const uploadedImg = await cloudinary.uploader.upload(req.file.path, {
         upload_preset: 'employeeApp',
@@ -901,9 +932,10 @@ router.put('/product/:id', upload.single('img'), async (req, res) => {
       updatedProduct.img = uploadedImg.secure_url;
     }
 
+    // Update the product in the database
     const product = await Products.findByIdAndUpdate(req.params.id, updatedProduct, {
-      new: true,
-      runValidators: true,
+      new: true, // Return the updated document
+      runValidators: true, // Ensure validation is run
     });
 
     if (!product) {
@@ -916,36 +948,6 @@ router.put('/product/:id', upload.single('img'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.patch('/product/:id/inventory', async (req, res) => {
-  try {
-    const { adjustment } = req.body; // Positive for restock, negative for sale
-    if (typeof adjustment !== 'number') {
-      return res.status(400).json({ error: 'Adjustment must be a number' });
-    }
-
-    const product = await Products.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    const newQuantity = product.inventory.quantity + adjustment;
-    if (newQuantity < 0) {
-      return res.status(400).json({ error: 'Inventory cannot be negative' });
-    }
-
-    product.inventory.quantity = newQuantity;
-    await product.save();
-
-    res.status(200).json({
-      status: 'success',
-      data: product,
-    });
-  } catch (error) {
-    console.error('Error adjusting inventory:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1175,7 +1177,7 @@ router.post('/forgot-password', async (req, res) => {
       from: 'jdwebservices1@gmail.com',
       to: email,
       subject: 'Password Reset',
-      text: `Click the following link to reset your password: https://ekdastar.onrender.com/reset-password/${resetToken}`,
+      text: `Click the following link to reset your password: http://localhost:3000/reset-password/${resetToken}`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -1327,79 +1329,7 @@ router.post('/stripe-webhook', express.raw({ type: 'application/json' }), async 
   res.json({ received: true });
 });
 
-// Dashbaord api's
-// 1. Total Products
-router.get('/total-products', async (req, res) => {
-  try {
-    const totalProducts = await Products.countDocuments();
-    res.json({ totalProducts });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching total products', error });
-  }
-});
 
-// 2. Total Categories
-router.get('/total-categories', async (req, res) => {
-  try {
-    const totalCategories = await Category.countDocuments();
-    res.json({ totalCategories });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching total categories', error });
-  }
-});
 
-// 3. Total Featured Products
-router.get('/total-featured-products', async (req, res) => {
-  try {
-    const totalFeaturedProducts = await Products.countDocuments({ featured: true });
-    res.json({ totalFeaturedProducts });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching featured products', error });
-  }
-});
 
-// 4. Sales Overview (Monthly Sales Data)
-router.get('/sales-overview', async (req, res) => {
-  try {
-    // Fetch orders (assuming this is the correct collection)
-    const orders = await Order.find();
-    console.log('Orders:', orders); // Debug: Verify the data
-
-    const monthlySales = {};
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    // Initialize monthly sales
-    months.forEach(month => (monthlySales[month] = 0));
-
-    // Process each order
-    orders.forEach(order => {
-      // Use orderDate if available, otherwise fallback to _id timestamp
-      const orderDate = order.orderDate ? new Date(order.orderDate) : new Date(order._id.getTimestamp());
-      const totalAmount = order.totalAmount || 0; // Use totalAmount if available
-
-      const month = months[orderDate.getMonth()];
-      monthlySales[month] += totalAmount;
-    });
-    console.log(orders,"or");
-    
-
-    const salesData = {
-      labels: months,
-      datasets: [
-        {
-          label: 'Sales',
-          data: months.map(month => monthlySales[month]),
-          backgroundColor: '#0d6efd',
-          borderColor: '#0d6efd',
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    res.json(salesData);
-  } catch (error) {
-    console.error('Error in sales-overview:', error);
-    res.status(500).json({ message: 'Error fetching sales overview', error });
-  }
-});
 module.exports = router

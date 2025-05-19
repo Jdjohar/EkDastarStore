@@ -1,432 +1,745 @@
 import React, { useState, useEffect } from 'react';
-import {loadStripe} from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart, useDispatchCart } from '../components/ContextReducer';
 import Navbar from '../components/Navbar2';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+
 const CheckoutForm = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [cart, setCart] = useState([]);
-    const [billingAddress, setBillingAddress] = useState({
-        firstName: '',lastName: '',company: '',country: '',streetAddress: '',apartment: '', city: '',province: '',postalCode: '',phone: '',email: ''
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [cardError, setCardError] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [billingAddress, setBillingAddress] = useState({
+    firstName: '',
+    lastName: '',
+    company: '',
+    country: '',
+    streetAddress: '',
+    apartment: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    phone: '',
+    email: '',
+  });
+  const [shippingAddress, setShippingAddress] = useState({ ...billingAddress });
+  const [sameAsBilling, setSameAsBilling] = useState(true);
+  const stripe = useStripe();
+  const elements = useElements();
+  const dispatch = useDispatchCart();
+  const navigate = useNavigate();
+  const [shippingMethod, setShippingMethod] = useState('Free');
+  const getShippingCost = () => {
+    switch (shippingMethod) {
+      case 'Standard': return 9.99;
+      case 'OneDay': return 15.0;
+      default: return 0;
+    }
+  };
+
+
+  useEffect(() => {
+    const getCart = localStorage.getItem('cart');
+    const getCartJson = JSON.parse(getCart);
+    if (getCartJson && Array.isArray(getCartJson)) {
+      const cartWithImages = getCartJson.map(item => ({
+        ...item,
+        image: item.image || 'https://via.placeholder.com/80',
+      }));
+      setCart(cartWithImages);
+    }
+  }, []);
+
+  const calculateTotal2 = () => {
+    let total = 0;
+    cart.forEach((item) => {
+      total += item.price;
     });
-    const [shippingAddress, setShippingAddress] = useState({ ...billingAddress });
-    const [sameAsBilling, setSameAsBilling] = useState(true);
-    const stripe = useStripe();
-    const elements = useElements();
-    let dispatch = useDispatchCart();
-    let navigate = useNavigate();
-    useEffect(() => {
-        const getCart = localStorage.getItem('cart');
-        const getCartJson = JSON.parse(getCart);
-        if (getCartJson && Array.isArray(getCartJson)) {
-            setCart(getCartJson);
-        }
-    }, []);
-    const calculateTotal = () => {
-        let total = 0;
-        cart.forEach((item) => {
-            total += item.price;
+    return total;
+  };
+  const calculateTotal = () => {
+    const subtotal = cart.reduce((total, item) => total + item.price * item.qty, 0);
+    const tax = subtotal * 0.1; // 10% tax
+    const shipping = getShippingCost();
+    return subtotal + tax + shipping;
+  };
+
+  const handleCardChange = (event) => {
+    if (event.error) {
+      setCardError(event.error.message);
+    } else {
+      setCardError(null);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    if (!stripe || !elements) {
+      setError("Stripe.js has not loaded yet. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!billingAddress.firstName || !billingAddress.email || !billingAddress.phone) {
+      setError("Please fill in all required billing address fields.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Step 1: Create a Payment Method
+      const cardElement = elements.getElement(CardElement);
+      const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: {
+          name: `${billingAddress.firstName} ${billingAddress.lastName}`,
+          email: billingAddress.email,
+          phone: billingAddress.phone,
+          address: {
+            line1: billingAddress.streetAddress,
+            line2: billingAddress.apartment || '',
+            city: billingAddress.city,
+            state: billingAddress.province,
+            postal_code: billingAddress.postalCode,
+            country: billingAddress.country,
+          },
+        },
+      });
+
+      if (paymentMethodError) {
+        setError(paymentMethodError.message || "Failed to create payment method.");
+        setLoading(false);
+        return;
+      }
+
+      const paymentMethodId = paymentMethod.id;
+
+      // Step 2: Create a customer
+      const amount = calculateTotal() * 100;
+      const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: `${billingAddress.firstName} ${billingAddress.lastName}`,
+          email: billingAddress.email,
+          phone: billingAddress.phone,
+          address: {
+            line1: billingAddress.streetAddress,
+            line2: billingAddress.apartment || '',
+            city: billingAddress.city,
+            state: billingAddress.province,
+            postal_code: billingAddress.postalCode,
+            country: billingAddress.country,
+          },
+        }),
+      });
+
+      if (!customerResponse.ok) {
+        throw new Error("Failed to create customer.");
+      }
+
+      const customerData = await customerResponse.json();
+      const customerId = customerData.customerId;
+
+      // Step 3: Send the payment method ID to the /payment endpoint
+      const response = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount,
+          customerId,
+          paymentMethodId, // Send the payment method ID
+          billingAddress: {
+            name: billingAddress.firstName,
+            address: {
+              line1: billingAddress.streetAddress,
+              line2: billingAddress.apartment || '',
+              city: billingAddress.city,
+              state: billingAddress.province,
+              postal_code: billingAddress.postalCode,
+              country: billingAddress.country,
+            },
+            email: billingAddress.email,
+            phone: billingAddress.phone,
+          },
+          shippingAddress: {
+            name: shippingAddress.firstName,
+            address: {
+              line1: shippingAddress.streetAddress,
+              line2: shippingAddress.apartment || '',
+              city: shippingAddress.city,
+              state: shippingAddress.province,
+              postal_code: shippingAddress.postalCode,
+              country: shippingAddress.country,
+            },
+            email: shippingAddress.email,
+            phone: shippingAddress.phone,
+          },
+          description: 'Export of 100 cotton t-shirts, size M, color blue',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create payment intent.");
+      }
+
+      const responseData = await response.json();
+      const clientSecret = responseData.clientSecret;
+
+      if (!clientSecret) {
+        setError("Client secret not found. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 4: Confirm the PaymentIntent (if needed, e.g., for 3D Secure)
+      const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: paymentMethodId, // Use the same payment method ID
+      });
+
+      if (paymentError) {
+        setError(paymentError.message || "An error occurred during payment. Please check your card details.");
+        setLoading(false);
+        return;
+      }
+
+      const userid = localStorage.getItem('userId');
+      const useremail = localStorage.getItem('userEmail');
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userid,
+            userEmail: useremail || billingAddress.email,
+            orderItems: cart,
+            email: billingAddress.email,
+            orderDate: new Date().toDateString(),
+            billingAddress: billingAddress,
+            shippingAddress: shippingAddress,
+            paymentMethod: 'Stripe',
+            orderStatus: "Processing",
+            shippingCost: 0,
+            paymentStatus: "paid",
+            shippingMethod: 'ByPost',
+            totalAmount: paymentIntent.amount,
+          }),
         });
-        return total; // Keep the total in dollars
-    };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setLoading(true);
-    
-        if (!stripe || !elements) {
-            setError("Stripe.js Error: Stripe.js has not loaded yet.");
-            setLoading(false);
-            return;
-        }
-    
-        if (!billingAddress || !billingAddress.firstName) {
-            setError("Billing Address Error: Billing address is incomplete.");
-            setLoading(false);
-            return;
-        }
-    
-        try {
-            const amount = calculateTotal() * 100; // Convert to cents for Stripe
-            console.log("Step 1");
-    
-            // Step 1: Create a Stripe Customer
-            const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: `${billingAddress.firstName} ${billingAddress.lastName}`,
-                    email: billingAddress.email,
-                    phone: billingAddress.phone,
-                    address: {
-                        line1: billingAddress.streetAddress,
-                        city: billingAddress.city,
-                        state: billingAddress.province,
-                        postal_code: billingAddress.postalCode,
-                        country: billingAddress.country,
-                    },
-                }),
-            });
-    
-            const customerData = await customerResponse.json();
-            const customerId = customerData.customerId; // Assuming your backend sends the customer ID
-            console.log("Customer created:", customerId);
-    
-            // Step 2: Create a PaymentIntent with the customer ID
-            const response = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    amount,
-                    customerId, // Associate the PaymentIntent with the customer
-                    billingAddress: {
-                        name: billingAddress.firstName,
-                        address: {
-                            line1: billingAddress.streetAddress,
-                            city: billingAddress.city,
-                            state: billingAddress.province,
-                            postal_code: billingAddress.postalCode,
-                            country: billingAddress.country,
-                        },
-                        email: billingAddress.email,
-                        phone: billingAddress.phone,
-                    },
-                    description: 'Export of 100 cotton t-shirts, size M, color blue',
-                }),
-            });
-    
-            const responseData = await response.json();
-            console.log(responseData, "responseData"); // Log the entire response object
-    
-            // Get the clientSecret from responseData
-            const clientSecret = responseData.clientSecret;
-    
-            if (!clientSecret) {
-                setError("Client Secret Error: Client secret not found.");
-                setLoading(false);
-                return;
-            }
-    
-            // Step 3: Confirm the card payment
-            const cardElement = elements.getElement(CardElement);
-            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name: `${billingAddress.firstName} ${billingAddress.lastName}`,
-                        email: billingAddress.email,
-                        phone: billingAddress.phone,
-                        address: {
-                            line1: billingAddress.streetAddress,
-                            city: billingAddress.city,
-                            state: billingAddress.province,
-                            postal_code: billingAddress.postalCode,
-                            country: billingAddress.country,
-                        },
-                    },
-                },
-            });
-    
-            if (error) {
-                setError("Card Payment Error: " + error.message);
-                setLoading(false);
-                return;
-            }
-    
-            const userid = localStorage.getItem('userId');
-            const useremail = localStorage.getItem('userEmail');
-            if (paymentIntent && paymentIntent.status === 'succeeded') {
-                const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId: userid,
-                        userEmail: useremail || billingAddress.email,
-                        orderItems: cart,
-                        email: billingAddress.email,
-                        orderDate: new Date().toDateString(),
-                        billingAddress: billingAddress,
-                        shippingAddress: shippingAddress,
-                        paymentMethod: 'Stripe',
-                        orderStatus:"Processing",
-                        shippingCost: 0,
-                        paymentStatus:"paid",
-                        shippingMethod: 'ByPost',
-                        totalAmount: paymentIntent.amount,
-                    }),
-                });
-    
-                const checkoutData = await checkoutResponse.json();
-                console.log(checkoutResponse, checkoutData, "checkoutData");
-    
-                if (checkoutResponse.status === 200) {
-                    dispatch({ type: "DROP" });
-                    navigate('/thankyou');
-                } else {
-                    setError("Order Placement Error: Failed to place order.");
-                }
-            } else {
-                setError("Payment Intent Error: Payment processing failed.");
-            }
-        } catch (error) {
-            console.log("Unexpected Error: ", error.message);
-            setError("Unexpected Error: " + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    
-    // Handle Billing and Shipping form changes
-    const handleBillingChange = (e) => {
-        const { name, value } = e.target;
-        setBillingAddress(prevState => ({ ...prevState, [name]: value }));
-        if (sameAsBilling) {
-            setShippingAddress(prevState => ({ ...prevState, [name]: value }));
-        }
-    };
-    const handleShippingChange = (e) => {
-        const { name, value } = e.target;
-        setShippingAddress(prevState => ({ ...prevState, [name]: value }));
-    };
-    // Handle checkbox toggle
-    const handleSameAsBilling = (e) => {
-        setSameAsBilling(e.target.checked);
-        if (e.target.checked) {
-            setShippingAddress({ ...billingAddress });
-        }
-    };
-    return (
-        <>
-            <Navbar />
-            <div className='container py-5'>
-                <h1>Checkout</h1>
-                <div className='row'>
-                    <div className='col-12 col-md-6'>
-                        <h4>Billing Address</h4>
-                        <form>
-                            <div className="row">
-                                <div className="col">
-                                    <label className='mb-2'>First Name</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="First name" name="firstName" value={billingAddress.firstName} onChange={handleBillingChange}
-                                    />
-                                </div>
-                                <div className="col">
-                                    <label className='mb-2'>Last Name</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="Last name" name="lastName" value={billingAddress.lastName} onChange={handleBillingChange}
-                                    />
-                                </div>
-                            </div>
-                            <div className="row mt-3">
-                                <div className="col">
-                                    <label className='mb-2'>Company Name (optional)</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="Company name" name="company" value={billingAddress.company} onChange={handleBillingChange}
-                                    />
-                                </div>
-                            </div>
-                            <div className="row mt-3">
-                                <div className="col">
-                                    <label className='mb-2'>Country</label>
-                                    <select
-                                        className="form-control"
-                                        name="country"
-                                        value={billingAddress.country}
-                                        onChange={handleBillingChange}
-                                    >
-                                        <option value="">Select Country</option>
-                                        <option value="AU">Australia</option>
-                                        {/* Add more countries here */}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="row mt-3">
-                                <div className="col">
-                                    <label className='mb-2'>Street Address</label>
-                                    <input
-                                        type="text"  className="form-control mb-3" placeholder="House Number and street name" name="streetAddress" value={billingAddress.streetAddress} onChange={handleBillingChange}
-                                    />
-                                    <input
-                                        type="text" className="form-control" placeholder="Apartment, suite, unit, etc. (optional)" name="apartment" value={billingAddress.apartment} onChange={handleBillingChange}
-                                    />
-                                </div>
-                            </div>
-                            <div className="row mt-3">
-                                <div className="col">
-                                    <label className='mb-2'>Province/State</label>
-                                    <input
-                                        type="text"  className="form-control" placeholder="Province/State" name="province" value={billingAddress.province}  onChange={handleBillingChange}
-                                    />
-                                </div>
-                                <div className="col">
-                                    <label className='mb-2'>Postal Code</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="Postal Code" name="postalCode" value={billingAddress.postalCode} onChange={handleBillingChange}
-                                    />
-                                </div>
-                                <div className="col">
-                                    <label className='mb-2'>City</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="City" name="city" value={billingAddress.city} onChange={handleBillingChange}
-                                    />
-                                </div>
-                            </div>
-                            <div className="row mt-3">
-                                <div className="col">
-                                    <label className='mb-2'>Phone</label>
-                                    <input
-                                        type="text" className="form-control" placeholder="Phone Number" name="phone" value={billingAddress.phone} onChange={handleBillingChange}
-                                    />
-                                </div>
-                                <div className="col">
-                                    <label className='mb-2'>Email</label>
-                                    <input
-                                        type="email" className="form-control" placeholder="Email Address" name="email" value={billingAddress.email} onChange={handleBillingChange}
-                                    />
-                                </div>
-                            </div>
-                        </form>
+        const checkoutData = await checkoutResponse.json();
 
-                        <h4>Shipping Address</h4>
-                        <input
-                            type="checkbox"
-                            checked={sameAsBilling}
-                            onChange={handleSameAsBilling}
-                        /> Same as Billing Address
-                        {!sameAsBilling && (
-                            <form className='mt-3'>
-                                <div className="row">
-                                    <div className="col">
-                                        <label className='mb-2'>First Name</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="First name" name="firstName" value={shippingAddress.firstName} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                    <div className="col">
-                                        <label className='mb-2'>Last Name</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="Last name" name="lastName" value={shippingAddress.lastName} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="row mt-3">
-                                    <div className="col">
-                                        <label className='mb-2'>Company Name (optional)</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="Company name"  name="company" value={shippingAddress.company} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="row mt-3">
-                                    <div className="col">
-                                        <label className='mb-2'>Country</label>
-                                        <select
-                                            className="form-control"
-                                            name="country"
-                                            value={shippingAddress.country}
-                                            onChange={handleShippingChange}
-                                        >
-                                            <option value="">Select Country</option>
-                                            <option value="Australia">Australia</option>
-                                            <option value="Canada">Canada</option>
-                                            {/* Add more countries here */}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="row mt-3">
-                                    <div className="col">
-                                        <label className='mb-2'>Street Address</label>
-                                        <input
-                                            type="text" className="form-control mb-3" placeholder="House Number and street name" name="streetAddress" value={shippingAddress.streetAddress} onChange={handleShippingChange}
-                                        />
-                                        <input
-                                            type="text" className="form-control" placeholder="Apartment, suite, unit, etc. (optional)" name="apartment" value={shippingAddress.apartment} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="row mt-3">
-                                    <div className="col">
-                                        <label className='mb-2'>Province/State</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="Province/State" name="province" value={shippingAddress.province} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                    <div className="col">
-                                        <label className='mb-2'>Postal Code</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="Postal Code" name="postalCode" value={shippingAddress.postalCode} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="row mt-3">
-                                    <div className="col">
-                                        <label className='mb-2'>Phone</label>
-                                        <input
-                                            type="text" className="form-control" placeholder="Phone Number" name="phone" value={shippingAddress.phone} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                    <div className="col">
-                                        <label className='mb-2'>Email</label>
-                                        <input
-                                            type="email" className="form-control" placeholder="Email Address" name="email" value={shippingAddress.email} onChange={handleShippingChange}
-                                        />
-                                    </div>
-                                </div>
-                            </form>
-                        )}
+        if (checkoutResponse.status === 200) {
+
+          dispatch({ type: "DROP" });
+          navigate('/thankyou');
+        } else {
+          setError("Failed to place order. Please try again.");
+        }
+      } else {
+        setError("Payment processing failed. Please try again.");
+      }
+    } catch (error) {
+      setError(error.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBillingChange = (e) => {
+    const { name, value } = e.target;
+    setBillingAddress((prevState) => ({ ...prevState, [name]: value }));
+    if (sameAsBilling) {
+      setShippingAddress((prevState) => ({ ...prevState, [name]: value }));
+    }
+  };
+
+  const handleShippingChange = (e) => {
+    const { name, value } = e.target;
+    setShippingAddress((prevState) => ({ ...prevState, [name]: value }));
+  };
+
+  const handleSameAsBilling = (e) => {
+    setSameAsBilling(e.target.checked);
+    if (e.target.checked) {
+      setShippingAddress({ ...billingAddress });
+    }
+  };
+
+  return (
+    <>
+      <Navbar />
+      <div className="container py-5">
+        <h1 className="mb-5 py-5">Checkout</h1>
+        <div className="row g-4">
+          {/* Main Content - Billing and Shipping */}
+          <div className="col-lg-8">
+            <div className="card shadow-sm border-0 mb-4">
+              <div className="card-header bg-white py-3">
+                <h4 className="mb-0 fw-bold">Billing Address</h4>
+              </div>
+              <div className="card-body">
+                <form className='checkoutForm'>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">First Name</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="First name"
+                        name="firstName"
+                        value={billingAddress.firstName}
+                        onChange={handleBillingChange}
+                        required
+                      />
                     </div>
-
-                    {/* Payment Section */}
-                    <div className='col-12 col-md-6'>
-                        <div className="col mt-3">
-                            <div className="d-flex justify-content-between">
-                                <h3>Your Order</h3>
-                            </div>
-                            {cart.map((item, id) => (
-                                <div key={id} className="d-flex justify-content-between">
-                                    <span>{item.name} x {item.qty}</span>
-                                    <span>${item.price}</span>
-                                </div>
-                            ))}
-                            <hr />
-                            <div className="d-flex justify-content-between">
-                                <span>Subtotal</span>
-                                <span>${calculateTotal()}</span>
-                            </div>
-                            <div className="d-flex justify-content-between">
-                                <span>Shipping</span>
-                                <span>Free Shipping in Australia</span>
-                            </div>
-                            <div className="d-flex justify-content-between">
-                                <span>Total</span>
-                                <span>${calculateTotal()}</span>
-                            </div>
-                        </div>
-                        <h4 className='pt-5'>Payment Details</h4>
-                        <form onSubmit={handleSubmit}>
-                            <CardElement />
-                            {error && <div className="alert alert-danger mt-3">{error}</div>}
-                            <button type="submit" className="btn btn-primary mt-3" disabled={!stripe || loading}>
-                                {loading ? 'Processing...' : 'Pay Now'}
-                            </button>
-                        </form>
+                    <div className="col-md-6">
+                      <label className="form-label">Last Name</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Last name"
+                        name="lastName"
+                        value={billingAddress.lastName}
+                        onChange={handleBillingChange}
+                        required
+                      />
                     </div>
-                </div>
+                    <div className="col-12">
+                      <label className="form-label">Company Name (optional)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Company name"
+                        name="company"
+                        value={billingAddress.company}
+                        onChange={handleBillingChange}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Country</label>
+                      <select
+                        className="form-control"
+                        name="country"
+                        value={billingAddress.country}
+                        onChange={handleBillingChange}
+                        required
+                      >
+                        <option value="">Select Country</option>
+                        <option value="AU">Australia</option>
+                        <option value="CA">Canada</option>
+                        {/* Add more countries as needed */}
+                      </select>
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Street Address</label>
+                      <input
+                        type="text"
+                        className="form-control mb-3"
+                        placeholder="House number and street name"
+                        name="streetAddress"
+                        value={billingAddress.streetAddress}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Apartment, suite, unit, etc. (optional)"
+                        name="apartment"
+                        value={billingAddress.apartment}
+                        onChange={handleBillingChange}
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label">City</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="City"
+                        name="city"
+                        value={billingAddress.city}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label">Province/State</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Province/State"
+                        name="province"
+                        value={billingAddress.province}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label">Postal Code</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Postal Code"
+                        name="postalCode"
+                        value={billingAddress.postalCode}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Phone</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Phone Number"
+                        name="phone"
+                        value={billingAddress.phone}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Email</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        placeholder="Email Address"
+                        name="email"
+                        value={billingAddress.email}
+                        onChange={handleBillingChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
-            <Footer />
-        </>
-    );
+
+            <div className="card shadow-sm border-0">
+              <div className="card-header bg-white py-3">
+                <h4 className="mb-0 fw-bold">Shipping Address</h4>
+              </div>
+              <div className="card-body">
+                <div className="form-check mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="sameAsBilling"
+                    checked={sameAsBilling}
+                    onChange={handleSameAsBilling}
+                  />
+                  <label className="form-check-label" htmlFor="sameAsBilling">
+                    Same as Billing Address
+                  </label>
+                </div>
+                {!sameAsBilling && (
+                  <form>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="form-label">First Name</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="First name"
+                          name="firstName"
+                          value={shippingAddress.firstName}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Last Name</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Last name"
+                          name="lastName"
+                          value={shippingAddress.lastName}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Company Name (optional)</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Company name"
+                          name="company"
+                          value={shippingAddress.company}
+                          onChange={handleShippingChange}
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Country</label>
+                        <select
+                          className="form-control"
+                          name="country"
+                          value={shippingAddress.country}
+                          onChange={handleShippingChange}
+                          required
+                        >
+                          <option value="">Select Country</option>
+                          <option value="AU">Australia</option>
+                          <option value="CA">Canada</option>
+                        </select>
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Street Address</label>
+                        <input
+                          type="text"
+                          className="form-control mb-3"
+                          placeholder="House number and street name"
+                          name="streetAddress"
+                          value={shippingAddress.streetAddress}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Apartment, suite, unit, etc. (optional)"
+                          name="apartment"
+                          value={shippingAddress.apartment}
+                          onChange={handleShippingChange}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">City</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="City"
+                          name="city"
+                          value={shippingAddress.city}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Province/State</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Province/State"
+                          name="province"
+                          value={shippingAddress.province}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Postal Code</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Postal Code"
+                          name="postalCode"
+                          value={shippingAddress.postalCode}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Phone</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Phone Number"
+                          name="phone"
+                          value={shippingAddress.phone}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Email</label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          placeholder="Email Address"
+                          name="email"
+                          value={shippingAddress.email}
+                          onChange={handleShippingChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar - Order Summary and Payment */}
+          <div className="col-lg-4">
+            <div className="card border-0 shadow-sm end-0" >
+              <div className="card-header bg-white py-3">
+                <h5 className="mb-0 fw-bold">Order Summary ({cart.length})</h5>
+              </div>
+              <div className="card-body">
+                {cart.map((item, index) => (
+                  <div key={index} className="d-flex align-items-center mb-3">
+                    <div className="me-3">
+                      <img
+                        src={item.img}
+                        alt={item.name}
+                        style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '5px' }}
+                      />
+                    </div>
+                    <div className="flex-grow-1">
+                      <p className="mb-1 fw-medium">{item.name}</p>
+                      <p className="mb-0 text-muted small">Size: {item.size}</p>
+                      <p className="mb-0 text-muted small">Qty: {item.qty}</p>
+                    </div>
+                    <div className="text-end">
+                      <p className="mb-0 fw-medium">${item.price.toFixed(2) }</p>
+                    </div>
+                  </div>
+                ))}
+                <hr />
+                <div className="d-flex justify-content-between mb-2">
+                  <span>Subtotal</span>
+                  <span>${cart.reduce((total, item) => total + item.price, 0).toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span>Tax (10%)</span>
+                  <span>${(cart.reduce((total, item) => total + item.price, 0) * 0.1).toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span>Shipping</span>
+                  <span>${getShippingCost().toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between fw-bold border-top pt-2">
+  <span>Total Amount</span>
+  <span>
+    ${(
+      cart.reduce((total, item) => total + item.price, 0) + 
+      cart.reduce((total, item) => total + item.price, 0) * 0.1 + 
+      getShippingCost()
+    ).toFixed(2)}
+  </span>
+</div>
+
+
+                <h5 className="mb-3">Payment Details</h5>
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <CardElement
+                      onChange={handleCardChange}
+                      options={{
+                        style: {
+                          base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                              color: '#aab7c4',
+                            },
+                          },
+                          invalid: {
+                            color: '#9e2146',
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                  {cardError && <div className="alert alert-warning mb-3">{cardError}</div>}
+                  {error && <div className="alert alert-danger mb-3">{error}</div>}
+                  <div className="form-check mb-3">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="termsCheck"
+                      required
+                    />
+                    <label className="form-check-label small" htmlFor="termsCheck">
+                      I agree with Terms & Conditions
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn-dark rounded-pill w-100"
+                    disabled={!stripe || loading || cardError}
+                  >
+                    {loading ? (
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    ) : null}
+                    {loading ? 'Processing...' : 'Pay Now'}
+                  </button>
+                </form>
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-bold">Shipping Method</label>
+                <select
+                  className="form-select"
+                  value={shippingMethod}
+                  onChange={(e) => setShippingMethod(e.target.value)}
+                >
+                  <option value="Free">Free Shipping</option>
+                  <option value="Standard">Standard - $9.99</option>
+                  <option value="OneDay">One Day - $15.00</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+
+      {/* Custom CSS */}
+      <style jsx>{`
+        .card {
+          border-radius: 10px;
+          overflow: hidden;
+        }
+
+        .form-control {
+          border-radius: 5px;
+          border: 1px solid #ced4da;
+          transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+          border-color: #007bff;
+          box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-dark {
+          background-color: #212529;
+          border-color: #212529;
+          transition: all 0.3s ease;
+        }
+
+        .btn-dark:hover {
+          background-color: #343a40;
+          border-color: #343a40;
+        }
+
+        .position-fixed {
+          z-index: 1000;
+        }
+
+        @media (max-width: 991px) {
+          .position-fixed {
+            position: static;
+            width: 100% !important;
+          }
+        }
+      `}</style>
+    </>
+  );
 };
 
 export default CheckoutForm;

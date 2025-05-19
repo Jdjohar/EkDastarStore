@@ -25,33 +25,28 @@ const Categories = () => {
     return (
         <>
             <Navbar />
-            <section class="hero-section d-flex align-items-center">
-                <div class="container text-center text-white">
-                    <h1 class="display-4">Categories</h1>
-                    <p class="lead">Learn more about our company and our mission</p>
-                </div>
-            </section>
 
-            <section className='py-5'>
-                <div class="container p-0">
-                    <div class="row text-center g-0">
-                        <h2 className="display-4 pt-3 fs-4 pb-4 fw-bold text-uppercase text-center">Explore Our Categories</h2>
-                        {foodCat.map((category) => (
-                            <div class="col-6 col-md-3" key={category._id}>
-                                <div class="gallery-item m-2">
-                                    <img src={category.img} alt={category.CategoryName} />
-                                    <div class="overlay">
-                                        <Link className='text-uppercase text-decoration-none' to={`/products/${category.CategoryName}`}>
-                                            <h3 className='text-uppercase'> {category.CategoryName} </h3>
-                                        </Link>
-                                    </div>
-                                </div>
+            {/* Category Section */}
+                <section className="py-5">
+                 <div className=" py-5 container">
+                   <h2 className="text-center mb-4">Shop by Category</h2>
+                       <div className="row g-4">
+                         {foodCat.map((category) => (
+                           <div className="col-lg-4" key={category._id}>
+                            <div className='category-banner h-100'>
+                            <img  src={category.img} className="img-fluid w-100 h-100 object-fit-cover rounded" alt="Electronics" />
+                            <div className="category-banner-content">
+              <h2 className="fw-bold text-white">{category.CategoryName}</h2>
+              <p className="mb-3">Latest gadgets and tech</p>
+              <Link to={`/products/${category.CategoryName}`} className="btn btn-light">Shop Now</Link>
+            </div>
                             </div>
-
-                        ))}
-                    </div>
-                </div>
-            </section>
+                           
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </section>
             <Footer />
         </>
     )

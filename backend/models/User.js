@@ -7,10 +7,10 @@ const UserSchema = new Schema({
         type:String,
         required:true
     },
-    location:{
-        type:String,
-        required:false,
-    },
+    // location:{
+    //     type:String,
+    //     required:false,
+    // },
     email:{
         type:String,
         required:true,

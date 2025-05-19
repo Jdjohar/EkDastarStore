@@ -1,70 +1,123 @@
-import React, { useState } from 'react'
-import Navbar from '../components/Navbar';
-import { useNavigate, Link } from 'react-router-dom'
-export default function ForgotPassword() {
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import Navbar2 from '../components/Navbar2'; // Consistent with Login.jsx
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-      
-        try {
-          const response = await fetch('https://ekdastar.onrender.com/api/auth/forgot-password', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-          });
-      
-          if (response.ok) {
-            const data = await response.json();
-      console.log(data);
-            // Check if resetToken is present in the response
-            if (data.resetToken) {
-              const resetToken = data.resetToken;
-              setMessage('Email Sent! Please reset your password!')
-            //   navigate(`/reset-password/${resetToken}`);
-            } else {
-              setMessage('An error occurred. Please try again.sd');
-            }
-          } else {
-            const errorData = await response.json();
-            setMessage(errorData.message || 'An error occurred. Please try again.');
-          }
-        } catch (error) {
-          setMessage('An error occurred. Please try again.');
-          console.error('Fetch error:', error);
-        }
-      };
-    
+export default function ForgotPassword() {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await fetch('https://ekdastar.onrender.com/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.resetToken) {
+        setMessage('Email Sent! Please check your inbox to reset your password.');
+      } else {
+        setError(data.message || 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{backgroundImage: 'url("https://images.pexels.com/photos/326278/pexels-photo-326278.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")', height: '100vh', backgroundSize: 'cover' }}>
-      <div>
-        <Navbar />
-      </div>
-      <div className='container'>
-        <form onSubmit={handleSubmit} className='w-50 m-auto mt-5 border bg-dark border-success rounded' >
-          <div className="m-3">
-            <label htmlFor="exampleInputEmail1" className="form-label text-white">Email address</label>
-            <input 
-            type="email" 
-            className="form-control" 
-            name='email'   
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)}
-             />
-            <div id="emailHelp" className="form-text">We'll never share your email with anyone.</div>
+    <div>
+      <Navbar2 />
+
+      <div className="container py-5">
+        <div className="row py-5 g-0 h-100">
+          {/* Left Side - Informative Section */}
+          <div className="col-lg-6 d-none d-lg-flex flex-column justify-content-center align-items-center">
+            <h1 className="fw-bold mb-3" style={{ fontSize: '2.5rem' }}>
+              Forgot Your Password?
+            </h1>
+            <p className="mb-5" style={{ fontSize: '1.1rem', maxWidth: '400px', textAlign: 'center' }}>
+              Enter your registered email address to receive a password reset link and regain access to your account.
+            </p>
           </div>
-          
-      
-          
-          <button type="submit" className="m-3 btn btn-success">Submit</button>
-        
-        </form>
-        {message && <p>{message}</p>}
+
+          {/* Right Side - Form */}
+          <div className="col-lg-6 d-flex justify-content-center align-items-center p-4">
+            <div className="w-100" style={{ maxWidth: '400px' }}>
+              <h2 className="fw-bold mb-2">Reset Password</h2>
+              <p className="text-muted mb-4">We’ll send a reset link to your email</p>
+
+              {/* Success / Error Message */}
+              {message && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  {message}
+                  <button type="button" className="btn-close" onClick={() => setMessage('')} aria-label="Close"></button>
+                </div>
+              )}
+              {error && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {error}
+                  <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label text-muted">Email address</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email address"
+                    required
+                    style={{ borderRadius: '10px', padding: '12px' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn w-100 text-white"
+                  style={{ backgroundColor: '#1e3a8a', borderRadius: '10px', padding: '12px' }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </button>
+              </form>
+
+              {/* Back to Login Link */}
+              <p className="text-center text-muted mt-4">
+                Remember your password?{' '}
+                <Link to="/login" className="text-primary text-decoration-none">
+                  Login here
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }

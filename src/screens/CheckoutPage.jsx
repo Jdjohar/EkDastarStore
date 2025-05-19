@@ -4,7 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from './CheckoutForm';
 
 // Replace with your actual Stripe publishable key
-const stripePromise = loadStripe('pk_test_gWZwqYPAe0EzDOJKNHAELYvi00I62Rx5tz');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutPage = () => {
   return (

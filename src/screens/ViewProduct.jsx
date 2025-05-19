@@ -9,36 +9,32 @@ const ViewProduct = () => {
     const dispatch = useDispatchCart();
     const cart = useCart();
     const [selectedQty, setSelectedQty] = useState(1);
-    const [selectedSize, setSelectedSize] = useState("");
+    const [selectedSize, setSelectedSize] = useState('');
     const [price, setPrice] = useState(0);
-
-    // Handle size change and update price
     const handleSizeChange = (size) => {
         setSelectedSize(size);
-        if (product && product.options && product.options.length > 0) {
+        if (product?.options?.length > 0) {
             const selectedOption = product.options[0][size];
-            setPrice(selectedOption);
+            setPrice(Number(selectedOption));  // Convert to number here
         }
     };
+    
 
-    // Add to cart or update quantity if item is already in cart
     const addToCart = () => {
         const existingItem = cart.find(
             (item) => item.id === product._id && item.size === selectedSize
         );
 
         if (existingItem) {
-            // Update quantity
             dispatch({
-                type: "UPDATE",
+                type: 'UPDATE',
                 id: product._id,
                 qty: selectedQty,
                 size: selectedSize,
             });
         } else {
-            // Add new item
             dispatch({
-                type: "ADD",
+                type: 'ADD',
                 id: product._id,
                 name: product.name,
                 qty: selectedQty,
@@ -49,16 +45,14 @@ const ViewProduct = () => {
         }
     };
 
-    // Remove item from cart
     const removeFromCart = () => {
         dispatch({
-            type: "REMOVE",
+            type: 'REMOVE',
             id: product._id,
             size: selectedSize,
         });
     };
 
-    // Fetch product details
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -66,10 +60,10 @@ const ViewProduct = () => {
                 const data = await response.json();
                 if (response.status === 200) {
                     setProduct(data.data);
-                    if (data.data.options && data.data.options.length > 0) {
+                    if (data.data.options?.length > 0) {
                         const firstSize = Object.keys(data.data.options[0])[0];
                         setSelectedSize(firstSize);
-                        setPrice(data.data.options[0][firstSize]);
+                        setPrice(Number(data.data.options[0][firstSize]));
                     }
                 } else {
                     console.error('Failed to fetch product:', data.message);
@@ -85,45 +79,34 @@ const ViewProduct = () => {
     return (
         <div>
             <Navbar />
-            <div className="container pt-5">
-                {product && (
-                    <div className="row pt-5">
-                        <div className="col-md-6">
-                            <div className="product-detail">
-                                <img src={product.img} className="img-fluid" alt={product.name} />
+            <section className="py-5">
+                <div className="container py-5">
+                    {product && (
+                        <div className="row pt-5">
+                            <div className="col-lg-6 mb-4">
+                                <img src={product.img} alt={product.name} className="img-fluid rounded" />
                             </div>
-                        </div>
-                        <div className="col-md-6">
-                            <div className="product-detail">
-                                <h3>{product.name}</h3>
-                                <h2 className="text-muted">${price}</h2>
+
+                            <div className="col-lg-6">
+                                <h1 className="mb-2">{product.name}</h1>
+                                <div className="mb-3">
+                                <span className="fs-3 text-danger">${price.toFixed(2)}</span>
+                                </div>
                                 <p>{product.description}</p>
 
                                 <div className="mb-3">
                                     <label className="form-label">Size</label>
                                     <div>
-                                        {product.options && product.options.length > 0 &&
-                                            Object.keys(product.options[0]).map((size) => (
-                                                <button
-                                                    key={size}
-                                                    className={`btn ${selectedSize === size ? 'btn-primary' : 'btn-outline-primary'} me-2`}
-                                                    onClick={() => handleSizeChange(size)}
-                                                >
-                                                    {size}
-                                                </button>
-                                            ))}
+                                        {product.options && Object.keys(product.options[0]).map((size) => (
+                                            <button
+                                                key={size}
+                                                className={`btn ${selectedSize === size ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                                                onClick={() => handleSizeChange(size)}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
                                     </div>
-                                </div>
-
-                                <div className="mb-3">
-                                    <label htmlFor="price" className="form-label">Price</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        id="price"
-                                        value={`$${price}`}
-                                        readOnly
-                                    />
                                 </div>
 
                                 <div className="mb-3">
@@ -133,19 +116,25 @@ const ViewProduct = () => {
                                         className="form-control"
                                         id="quantity"
                                         style={{ width: '100px' }}
-                                        value={selectedQty}
-                                        onChange={(e) => setSelectedQty(e.target.value)}
                                         min="1"
+                                        value={selectedQty}
+                                        onChange={(e) => setSelectedQty(parseInt(e.target.value))}
                                     />
                                 </div>
 
-                                <button className="btn btn-dark me-2" onClick={addToCart}>Add to Cart</button>
-                                <button className="btn btn-danger" onClick={removeFromCart}>Remove from Cart</button>
+                                <div className="d-flex gap-2">
+                                    <button className="btn btn-primary" onClick={addToCart}>
+                                        <i className="bi bi-cart-plus me-2"></i> Add to Cart
+                                    </button>
+                                    <button className="btn btn-danger" onClick={removeFromCart}>
+                                        <i className="bi bi-trash me-2"></i> Remove from Cart
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            </section>
         </div>
     );
 };

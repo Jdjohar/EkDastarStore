@@ -23,7 +23,19 @@ const productSchema = new Schema({
         required: false,
         default: 'false'
     },
-    options: []
+    options: [],
+    inventory: {
+        quantity: {
+          type: Number,
+          required: true,
+          default: 0, // Default stock quantity
+        },
+        lowStockThreshold: {
+          type: Number,
+          required: false,
+          default: 5, // Optional: Trigger low stock warning
+        },
+      },
 
 })
 module.exports = mongoose.model('food_item', productSchema)

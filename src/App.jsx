@@ -1,4 +1,4 @@
-import './App.css';
+// import './App.css';
 // import '../node_modules/bootstrap-dark-5/dist/css/bootstrap-dark.min.css'  //npm i bootstrap-dark-5 boostrap
 // import '../node_modules/bootstrap/dist/js/bootstrap.bundle';
 // import "../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -35,6 +35,7 @@ import CategoryEdit from './admin/CategoryEdit.jsx';
 import ProductCatwise from './screens/ProductCatwise.jsx';
 import About from './screens/About.jsx';
 import Categories from './screens/Categories.jsx';
+import SearchResults from './screens/SearchResults.jsx';
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
             <Route exact path="/testpayment" element={<Testpayment />} />
             <Route exact path="/cartpage" element={<CartPage />} />
             <Route exact path="/thankyou" element={<ThankYou />} />
+            <Route exact path="/search" element={<SearchResults />} />
             
             <Route exact path="/reset-password/:resetToken" element={<ResetPassword />} />
           
