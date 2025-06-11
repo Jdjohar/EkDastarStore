@@ -9,7 +9,8 @@ const app = express();
 const port = 5000;
 const path = require('path');
 const router = express.Router();
-
+const { job } = require('./cron');
+job.start(); 
 // Middleware for serving static files
 app.use(express.static(path.join(__dirname, 'uploads')));
 
