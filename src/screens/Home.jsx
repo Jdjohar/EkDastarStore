@@ -82,7 +82,7 @@ export default function Home() {
                     </div>
                     <div className="card-body text-center">
                       <h5 className="card-title">{category.CategoryName}</h5>
-                      <p className="card-text text-muted">Latest gadgets and tech</p>
+                     
                     </div>
                   </div>
                 </Link>

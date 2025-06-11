@@ -26,6 +26,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.use('/', require('./Routes/Webhook'));
 // Apply express.json() for all other routes EXCEPT the webhook
 app.use(express.json());

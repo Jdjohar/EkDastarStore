@@ -37,7 +37,7 @@ const Categories = () => {
                             <img  src={category.img} className="img-fluid w-100 h-100 object-fit-cover rounded" alt="Electronics" />
                             <div className="category-banner-content">
               <h2 className="fw-bold text-white">{category.CategoryName}</h2>
-              <p className="mb-3">Latest gadgets and tech</p>
+             
               <Link to={`/products/${category.CategoryName}`} className="btn btn-light">Shop Now</Link>
             </div>
                             </div>
