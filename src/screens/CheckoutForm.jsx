@@ -38,7 +38,7 @@ const CheckoutForm = () => {
       default: return 0;
     }
   };
-
+const userid = localStorage.getItem('userId');
 
   useEffect(() => {
     const getCart = localStorage.getItem('cart');
@@ -157,7 +157,9 @@ const CheckoutForm = () => {
         },
         body: JSON.stringify({
           amount,
+
           customerId,
+          uemail:billingAddress.email, 
           paymentMethodId, // Send the payment method ID
           billingAddress: {
             name: billingAddress.firstName,
@@ -185,7 +187,7 @@ const CheckoutForm = () => {
             email: shippingAddress.email,
             phone: shippingAddress.phone,
           },
-          description: 'Export of 100 cotton t-shirts, size M, color blue',
+          description: 'EK Dastar Payment',
         }),
       });
 
@@ -194,6 +196,8 @@ const CheckoutForm = () => {
       }
 
       const responseData = await response.json();
+      console.log("responseData:",responseData);
+      
       const clientSecret = responseData.clientSecret;
 
       if (!clientSecret) {
@@ -213,7 +217,7 @@ const CheckoutForm = () => {
         return;
       }
 
-      const userid = localStorage.getItem('userId');
+    
       const useremail = localStorage.getItem('userEmail');
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
@@ -223,22 +227,26 @@ const CheckoutForm = () => {
           },
           body: JSON.stringify({
             userId: userid,
+            
             userEmail: useremail || billingAddress.email,
             orderItems: cart,
+            orderId:responseData.orderId,
             email: billingAddress.email,
             orderDate: new Date().toDateString(),
             billingAddress: billingAddress,
             shippingAddress: shippingAddress,
             paymentMethod: 'Stripe',
-            orderStatus: "Processing",
+            orderStatus: "Pending",
             shippingCost: 0,
-            paymentStatus: "paid",
+            paymentStatus: "pending",
             shippingMethod: 'ByPost',
             totalAmount: paymentIntent.amount,
           }),
         });
 
         const checkoutData = await checkoutResponse.json();
+        console.log(checkoutData,"checkoutData");
+        
 
         if (checkoutResponse.status === 200) {
 
