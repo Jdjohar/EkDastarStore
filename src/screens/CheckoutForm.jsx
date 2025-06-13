@@ -89,12 +89,18 @@ const userid = localStorage.getItem('userId');
     });
     return total;
   };
-  const calculateTotal = () => {
-    const subtotal = cart.reduce((total, item) => total + item.price * item.qty, 0);
-    const tax = subtotal * 0.1; // 10% tax
-    const shipping = getShippingCost();
-    return subtotal + tax + shipping;
-  };
+const calculateTotal = () => {
+  const subtotal = cart.reduce((total, item) => total + item.price * item.qty, 0);
+  console.log("subtotal:", subtotal);
+  
+  const tax = subtotal * 0.1; // 10% tax
+  console.log("tax:", tax);
+  const shipping = getShippingCost();
+
+  console.log("Inner calculateTotal:", parseFloat(subtotal + tax + shipping).toFixed(2));
+  return parseFloat((subtotal + tax + shipping).toFixed(2)); // fixes float issue
+};
+
 
   const handleCardChange = (event) => {
     if (event.error) {
@@ -207,7 +213,10 @@ const userid = localStorage.getItem('userId');
       const paymentMethodId = paymentMethod.id;
 
       // Step 2: Create a customer
-      const amount = calculateTotal() * 100;
+    const amount =calculateTotal();
+console.log(calculateTotal(), "amdsdsdsdssddsdsdsdsdount");
+console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
+      
       const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
         method: 'POST',
         headers: {
@@ -243,7 +252,6 @@ const userid = localStorage.getItem('userId');
         },
         body: JSON.stringify({
           amount,
-
           customerId,
           uemail:billingAddress.email, 
           paymentMethodId, // Send the payment method ID
