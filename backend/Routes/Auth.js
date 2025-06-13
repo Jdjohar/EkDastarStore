@@ -517,8 +517,8 @@ router.get('/orders/status/:status', async (req, res) => {
 
 
 router.post('/payment', async (req, res) => {
-    const { amount, description,userId, uemail, billingAddress, shippingAddress, customerId, paymentMethodId, orderId } = req.body;
-console.log(amount, description,userId, uemail, billingAddress, shippingAddress, customerId, paymentMethodId, orderId);
+    const { amount, description, userId, uemail, billingAddress, shippingAddress, customerId, paymentMethodId, orderId } = req.body;
+    console.log(amount, description, userId, uemail, billingAddress, shippingAddress, customerId, paymentMethodId, orderId);
 
     try {
         // Validate required fields
@@ -531,6 +531,9 @@ console.log(amount, description,userId, uemail, billingAddress, shippingAddress,
             return res.status(400).json({ msg: 'Email is required' });
         }
 
+        // Convert amount to integer cents
+        const amountInCents = Math.round(amount * 100);
+
         let order = await Order.findById(orderId);
         if (!order && orderId) {
             return res.status(404).json({ msg: 'Order not found' });
@@ -540,7 +543,7 @@ console.log(amount, description,userId, uemail, billingAddress, shippingAddress,
                 email: email,
                 billingAddress: billingAddress.address,
                 shippingAddress: shippingAddress.address,
-                amount: amount / 100,
+                amount: amount, // Keep original amount in dollars
                 currency: 'AUD',
                 status: 'pending',
             });
@@ -548,6 +551,7 @@ console.log(amount, description,userId, uemail, billingAddress, shippingAddress,
         }
 
         await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+
         const customer = await stripe.customers.retrieve(customerId);
         if (!customer.invoice_settings || !customer.invoice_settings.default_payment_method) {
             await stripe.customers.update(customerId, {
@@ -556,7 +560,7 @@ console.log(amount, description,userId, uemail, billingAddress, shippingAddress,
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount,
+            amount: amountInCents,
             currency: 'AUD',
             payment_method_types: ['card'],
             payment_method: paymentMethodId,
@@ -602,6 +606,7 @@ console.log(amount, description,userId, uemail, billingAddress, shippingAddress,
         res.status(500).json({ msg: 'Payment processing failed', error: error.message });
     }
 });
+
 router.post('/checkoutOrder', async (req, res) => {
     try {
       const {
