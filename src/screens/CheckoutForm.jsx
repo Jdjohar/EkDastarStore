@@ -770,7 +770,7 @@ const userid = localStorage.getItem('userId');
                   <div key={index} className="d-flex align-items-center mb-3">
                     <div className="me-3">
                       <img
-                        src={item.image}
+                        src={item.img}
                         alt={item.name}
                         style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '5px' }}
                       />
