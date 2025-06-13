@@ -61,7 +61,7 @@ export default function Card(props) {
   return (
     <div className="">
       <div className="card product-card h-100">
-      <div className="product-badge bg-danger text-white">-20%</div>
+      {/* <div className="product-badge bg-danger text-white">-20%</div> */}
       <div className="product-wishlist">
               <button className="btn wishlist-btn"><i className="bi bi-heart"></i></button>
             </div>
