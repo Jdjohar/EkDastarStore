@@ -23,7 +23,7 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch("https://ekdastar.onrender.com/api/auth/login", {
+      const response = await fetch("https://ekdastarstore.onrender.com/api/auth/login", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

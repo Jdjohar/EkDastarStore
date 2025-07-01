@@ -20,7 +20,7 @@ const CategoryEdit = () => {
     const fetchCategory = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`https://ekdastar.onrender.com/api/auth/categories/${id}`);
+        const response = await fetch(`https://ekdastarstore.onrender.com/api/auth/categories/${id}`);
         const result = await response.json();
 
         if (result.status === 'success' || result.data) { // Adjust based on your API response
@@ -63,7 +63,7 @@ const CategoryEdit = () => {
     if (file) formData.append('img', file);
 
     try {
-      const response = await fetch(`https://ekdastar.onrender.com/api/auth/categories/${id}`, {
+      const response = await fetch(`https://ekdastarstore.onrender.com/api/auth/categories/${id}`, {
         method: 'PUT',
         body: formData,
       });

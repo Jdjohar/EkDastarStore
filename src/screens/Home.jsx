@@ -15,7 +15,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
 
   const loadFoodItems = async () => {
-    let response = await fetch('https://ekdastar.onrender.com/api/auth/foodData', {
+    let response = await fetch('https://ekdastarstore.onrender.com/api/auth/foodData', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

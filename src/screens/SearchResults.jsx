@@ -26,7 +26,7 @@ const SearchResults = () => {
       setError(null);
 
       try {
-        const response = await fetch(`https://ekdastar.onrender.com/api/auth/products/search?name=${encodeURIComponent(searchTerm)}`, {
+        const response = await fetch(`https://ekdastarstore.onrender.com/api/auth/products/search?name=${encodeURIComponent(searchTerm)}`, {
           headers: {
             'Content-Type': 'application/json',
             // Uncomment if authentication is required

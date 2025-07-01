@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'uploads')));
 app.use((req, res, next) => {
   const corsWhitelist = [
     "https://ek-dastar-store.vercel.app",
+    "https://www.ekdastar.com.au",
     "http://localhost:5173",
   ];
   if (corsWhitelist.indexOf(req.headers.origin) !== -1) {

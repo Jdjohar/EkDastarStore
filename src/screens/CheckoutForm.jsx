@@ -217,7 +217,7 @@ const calculateTotal = () => {
 console.log(calculateTotal(), "amdsdsdsdssddsdsdsdsdount");
 console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
       
-      const customerResponse = await fetch('https://ekdastar.onrender.com/api/auth/create-customer', {
+      const customerResponse = await fetch('https://ekdastarstore.onrender.com/api/auth/create-customer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
       const customerId = customerData.customerId;
 
       // Step 3: Send the payment method ID to the /payment endpoint
-      const response = await fetch('https://ekdastar.onrender.com/api/auth/payment', {
+      const response = await fetch('https://ekdastarstore.onrender.com/api/auth/payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +314,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
     
       const useremail = localStorage.getItem('userEmail');
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        const checkoutResponse = await fetch("https://ekdastar.onrender.com/api/auth/checkoutOrder", {
+        const checkoutResponse = await fetch("https://ekdastarstore.onrender.com/api/auth/checkoutOrder", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

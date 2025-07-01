@@ -1231,7 +1231,7 @@ router.post('/forgot-password', async (req, res) => {
       from: 'jdwebservices1@gmail.com',
       to: email,
       subject: 'Password Reset',
-      text: `Click the following link to reset your password: https://ekdastar.onrender.com/reset-password/${resetToken}`,
+      text: `Click the following link to reset your password: https://ekdastarstore.onrender.com/reset-password/${resetToken}`,
     };
 
     await transporter.sendMail(mailOptions);

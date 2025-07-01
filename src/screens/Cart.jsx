@@ -21,7 +21,7 @@ export default function Cart() {
   const handleCheckOut = async () => {
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://ekdastar.onrender.com/api/auth/orderData", {
+      const response = await fetch("https://ekdastarstore.onrender.com/api/auth/orderData", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
