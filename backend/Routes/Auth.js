@@ -5,6 +5,10 @@ const Products = require('../models/Product')
 const Category = require('../models/Category')
 const Checkout = require('../models/CheckOut')
 const mongoose = require('mongoose');
+const path = require('path');
+ const fs = require('fs');
+const csv = require('csv-parser');
+const stream = require('stream');
 const StripeResponse = require('../models/StripeResponse')
 require('dotenv').config();
 const router = express.Router()
@@ -15,6 +19,7 @@ const axios = require('axios')
 const fetch = require('../middleware/fetchdetails');
 const jwtSecret = process.env.JWT_SECRET;
 const multer = require('multer');
+
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -140,6 +145,8 @@ router.post('/createuser', [
     res.status(500).send("Internal Server Error");
   }
 });
+
+
 
 
 //Get a Product
@@ -891,6 +898,72 @@ router.post('/addproducts', upload.single('img'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST route to import products from CSV
+router.post('/import-csv', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const filePath = path.resolve(req.file.path);
+
+    console.log('Uploaded file path:', filePath);
+
+    const results = [];
+    const inserted = [];
+
+    // Create read stream from uploaded file on disk
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', (row) => {
+        console.log('Parsed row:', row); // Debug each row
+        results.push(row);
+      })
+      .on('error', (err) => {
+        console.error('CSV parsing error:', err);
+      })
+      .on('end', async () => {
+        console.log(`Total rows parsed: ${results.length}`);
+
+        for (const row of results) {
+          try {
+            const {
+              name,
+              description,
+              CategoryName,
+              img,
+              featured,
+              quantity,
+              options,
+            } = row;
+
+            const newProduct = new Products({
+              name,
+              description,
+              CategoryName,
+              img,
+              featured: featured === 'true',
+              inventory: { quantity: Number(quantity) || 0 },
+              options: options ? JSON.parse(options) : {},
+            });
+
+            const savedProduct = await newProduct.save();
+            inserted.push(savedProduct);
+          } catch (err) {
+            console.error('Error saving product:', err.message);
+          }
+        }
+
+        res.status(201).json({
+          message: 'CSV import complete',
+          count: inserted.length,
+          data: inserted,
+        });
+      });
+  } catch (err) {
+    console.error('CSV import error:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

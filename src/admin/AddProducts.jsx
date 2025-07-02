@@ -15,6 +15,8 @@ const AddProduct = () => {
   const [options, setOptions] = useState([{ key: '', value: '' }]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+   const [csvFile, setCsvFile] = useState(null); // 🔄 Added
+  const [csvUploadLoading, setCsvUploadLoading] = useState(false); // 🔄 Added
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +35,36 @@ const AddProduct = () => {
     };
     fetchCategories();
   }, []);
+
+    // 🔄 NEW: CSV Upload Handler
+  const handleCsvUpload = async () => {
+    if (!csvFile) return alert('Please select a CSV file');
+
+    const formData = new FormData();
+    formData.append('file', csvFile);
+
+    setCsvUploadLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/import-csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`${data.count} products imported successfully!`);
+        navigate('/admin/productlist');
+      } else {
+        const error = await response.text();
+        alert('Import failed: ' + error);
+      }
+    } catch (err) {
+      console.error('CSV Upload Error:', err.message);
+      alert('Error uploading CSV');
+    } finally {
+      setCsvUploadLoading(false);
+    }
+  };
 
   const handleStaticInputChange = (fieldName, value) => {
     setStaticFormData((prevData) => ({
@@ -84,7 +116,7 @@ const AddProduct = () => {
     formData.append('options', opt);
 
     try {
-      const response = await fetch('https://ekdastarstore.onrender.com/api/auth/addproducts', {
+      const response = await fetch('http://localhost:5000/api/auth/addproducts', {
         method: 'POST',
         body: formData,
       });
@@ -274,6 +306,30 @@ const AddProduct = () => {
                       )}
                     </button>
                   </form>
+                  <hr className="my-4" />
+                  <h5 className="text-center">Or Import Products via CSV</h5>
+                  <div className="mb-3">
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept=".csv"
+                      onChange={(e) => setCsvFile(e.target.files[0])}
+                    />
+                  </div>
+                  <button
+                    className="btn btn-success w-100"
+                    onClick={handleCsvUpload}
+                    disabled={csvUploadLoading}
+                  >
+                    {csvUploadLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Uploading CSV...
+                      </>
+                    ) : (
+                      'Import CSV'
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
