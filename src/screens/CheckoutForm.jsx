@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart, useDispatchCart } from '../components/ContextReducer';
-import Navbar from '../components/Navbar2';
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 
-  // Australian address data (simplified for demonstration)
+// Australian address data (simplified for demonstration)
 const australianStates = [
   { code: 'NSW', name: 'New South Wales', postalRange: ['2000', '2999'] },
   { code: 'VIC', name: 'Victoria', postalRange: ['3000', '3999'] },
@@ -53,22 +53,20 @@ const CheckoutForm = () => {
   const stripe = useStripe();
   const elements = useElements();
   const dispatch = useDispatchCart();
-    const [billingErrors, setBillingErrors] = useState({});
-    const [shippingErrors, setShippingErrors] = useState({});
+  const [billingErrors, setBillingErrors] = useState({});
+  const [shippingErrors, setShippingErrors] = useState({});
   const navigate = useNavigate();
   const [shippingMethod, setShippingMethod] = useState('Free');
+
   const getShippingCost = () => {
-    switch (shippingMethod) {
-      case 'Standard': return 9.99;
-      case 'OneDay': return 15.0;
-      default: return 0;
-    }
+    const subtotal = cart.reduce((total, item) => total + parseFloat(item.price), 0);
+    return subtotal >= 99 ? 0 : 9.99;
   };
 
   const calculateSubtotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.qty, 0);
+    return cart.reduce((total, item) => total + parseFloat(item.price), 0);
   };
-const userid = localStorage.getItem('userId');
+  const userid = localStorage.getItem('userId');
 
   useEffect(() => {
     const getCart = localStorage.getItem('cart');
@@ -89,17 +87,13 @@ const userid = localStorage.getItem('userId');
     });
     return total;
   };
-const calculateTotal = () => {
-  const subtotal = cart.reduce((total, item) => total + item.price * item.qty, 0);
-  console.log("subtotal:", subtotal);
-  
-  const tax = subtotal * 0.1; // 10% tax
-  console.log("tax:", tax);
-  const shipping = getShippingCost();
+  const calculateTotal = () => {
+    const subtotal = cart.reduce((total, item) => total + parseFloat(item.price), 0);
+    const tax = subtotal * 0.1; // 10% GST
+    const shipping = subtotal >= 99 ? 0 : 9.99;
 
-  console.log("Inner calculateTotal:", parseFloat(subtotal + tax + shipping).toFixed(2));
-  return parseFloat((subtotal + tax + shipping).toFixed(2)); // fixes float issue
-};
+    return parseFloat((subtotal + tax + shipping).toFixed(2));
+  };
 
 
   const handleCardChange = (event) => {
@@ -213,10 +207,10 @@ const calculateTotal = () => {
       const paymentMethodId = paymentMethod.id;
 
       // Step 2: Create a customer
-    const amount =calculateTotal();
-console.log(calculateTotal(), "amdsdsdsdssddsdsdsdsdount");
-console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
-      
+      const amount = calculateTotal();
+      console.log(calculateTotal(), "amdsdsdsdssddsdsdsdsdount");
+      console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
+
       const customerResponse = await fetch('https://ekdastarstore.onrender.com/api/auth/create-customer', {
         method: 'POST',
         headers: {
@@ -253,7 +247,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
         body: JSON.stringify({
           amount,
           customerId,
-          uemail:billingAddress.email, 
+          uemail: billingAddress.email,
           paymentMethodId, // Send the payment method ID
           billingAddress: {
             name: billingAddress.firstName,
@@ -290,8 +284,8 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
       }
 
       const responseData = await response.json();
-      console.log("responseData:",responseData);
-      
+      console.log("responseData:", responseData);
+
       const clientSecret = responseData.clientSecret;
 
       if (!clientSecret) {
@@ -311,7 +305,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
         return;
       }
 
-    
+
       const useremail = localStorage.getItem('userEmail');
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         const checkoutResponse = await fetch("https://ekdastarstore.onrender.com/api/auth/checkoutOrder", {
@@ -320,17 +314,17 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: userid, 
+            userId: userid,
             userEmail: billingAddress.email || useremail,
             orderItems: cart,
-            orderId:responseData.orderId,
+            orderId: responseData.orderId,
             email: billingAddress.email,
             orderDate: new Date().toDateString(),
             billingAddress: billingAddress,
             shippingAddress: shippingAddress,
             paymentMethod: 'Stripe',
             orderStatus: "Pending",
-            shippingCost: 0,
+            shippingCost: getShippingCost(),
             paymentStatus: "pending",
             shippingMethod: 'ByPost',
             totalAmount: paymentIntent.amount,
@@ -338,8 +332,8 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
         });
 
         const checkoutData = await checkoutResponse.json();
-        console.log(checkoutData,"checkoutData");
-        
+        console.log(checkoutData, "checkoutData");
+
 
         if (checkoutResponse.status === 200) {
 
@@ -381,7 +375,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
   return (
     <>
       <Navbar />
-           <div className="container py-5">
+      <div className="container py-5">
         <h1 className="mb-5 py-5">Checkout</h1>
         <div className="row g-4">
           <div className="col-lg-8">
@@ -789,7 +783,7 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
                       <p className="mb-0 text-muted small">Qty: {item.qty}</p>
                     </div>
                     <div className="text-end">
-                      <p className="mb-0 fw-medium">${(item.price * item.qty).toFixed(2)}</p>
+                      <p className="mb-0 fw-medium">${parseFloat(item.price).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
@@ -813,15 +807,10 @@ console.log(amount.toFixed(2), "dsdsddsdssddsdsds");
 
                 <div className="mt-4">
                   <label className="form-label fw-bold">Shipping Method</label>
-                  <select
-                    className="form-select"
-                    value={shippingMethod}
-                    onChange={(e) => setShippingMethod(e.target.value)}
-                  >
-                    <option value="Free">Free Shipping</option>
-                    <option value="Standard">Standard - $9.99</option>
-                    <option value="OneDay">One Day - $15.00</option>
-                  </select>
+                  <p className="form-control-plaintext">
+                    {calculateSubtotal() >= 99 ? 'Free Shipping' : 'Standard Shipping - $9.99'}
+                  </p>
+                  <small>We deliver all our products via Australia Post for reliable and timely service.</small>
                 </div>
 
                 <h5 className="mt-4 mb-3">Payment Details</h5>

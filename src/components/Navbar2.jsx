@@ -68,7 +68,7 @@ export default function Navbar(props) {
                 </li>
               )}
               <li className="nav-item">
-                <a className="nav-link" href="#contact">Contact</a>
+                <a className="nav-link" href="/contact">Contact</a>
               </li>
             </ul>
             <form className="d-flex me-3" onSubmit={handleSearch}>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import Navbar from '../components/Navbar2'
+import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Aboutimg from '../../public/about.png'
 import { Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet';
 
 const Categories = () => {
     const [foodCat, setFoodCat] = useState([])
@@ -24,6 +25,10 @@ const Categories = () => {
     }, [])
     return (
         <>
+         <Helmet>
+          <title>Categories | Australia | EK Dastar</title>
+        </Helmet>
+
             <Navbar />
 
             {/* Category Section */}
